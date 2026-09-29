@@ -154,7 +154,9 @@ export async function run(argv, env = process.env, { fetchImpl = globalThis.fetc
   return { result, text: lines.join('\n') };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// npx and global installs run this file through a symlink (node_modules/.bin), so compare real paths.
+const realpath = (p) => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
+const isMain = process.argv[1] && realpath(process.argv[1]) === realpath(fileURLToPath(import.meta.url));
 if (isMain) {
   run(process.argv.slice(2))
     .then(({ result, text }) => {

@@ -1,6 +1,6 @@
 {
   "name": "claude-dependency-test",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "How addicted to Claude are you? Scores your Claude Code dependency out of 100 from local usage stats and publishes a shareable patient chart. Your prompts never leave your machine.",
   "type": "module",
   "bin": {

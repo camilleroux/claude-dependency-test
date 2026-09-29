@@ -29,6 +29,12 @@ Then run the test:
 /claude-dependency-test:diagnose
 ```
 
+Or straight from any terminal, without installing the plugin (you get the report, but not Claude's medical opinion):
+
+```bash
+npx claude-dependency-test
+```
+
 Requirements: Node.js 18 or later on your `PATH`.
 
 Options (pass them after the command, e.g. `/claude-dependency-test:diagnose --tz Europe/Paris`):
