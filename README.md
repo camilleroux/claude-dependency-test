@@ -7,7 +7,7 @@ A Claude Code plugin that computes a **Claude dependency score out of 100** from
 ![Example result card](docs/example-card.png)
 
 - **Deterministic.** A local script does all the math with explicit, documented rules. Claude only adds a short "medical opinion" on top.
-- **Private by construction.** It reads timestamps and a few enum-like fields, never the text of your prompts or Claude's answers. Only aggregate numbers are published, and the server rejects anything else. No account, no analytics.
+- **Private by construction.** It reads timestamps and a few enum-like fields, never the text of your prompts or Claude's answers. Only aggregate numbers are published, and the server rejects anything else. No account, no telemetry in the plugin, no cookies on the site.
 - **Shareable.** An online report at a short link (`/case/<id>`) with its own preview image, a 1200×630 card, share buttons, and a README badge that always shows your latest score.
 
 _Not an actual medical diagnosis. Unofficial fan project, not affiliated with Anthropic._

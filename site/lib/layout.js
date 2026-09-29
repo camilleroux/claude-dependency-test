@@ -38,6 +38,8 @@ export function head({ title, description, image, canonical, extraCss = '', inde
 <link rel="preload" href="/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="theme-color" content="#010403">
 <link rel="stylesheet" href="/site.css">
+<script src="/va.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 ${extraCss ? `<style>${extraCss}</style>` : ''}
 </head>
 <body>

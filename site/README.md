@@ -39,7 +39,7 @@ Without storage credentials, the dev server keeps published reports in memory. T
 - [ ] Fill in the publisher's name and a contact email in `public/privacy.html` (a French publisher also needs these legal notices under the LCEN).
 - [ ] Create the Upstash database in an **EU region** (e.g. Frankfurt or Ireland).
 - [ ] Accept Vercel's and Upstash's data processing agreements (DPA) in their dashboards.
-- [ ] Keep Vercel runtime log retention at the minimum, and don't enable Web Analytics (the privacy policy says there is none).
+- [ ] Keep Vercel runtime log retention at the minimum. Web Analytics is enabled (cookieless, case ids redacted by `public/va.js`) and described in the privacy policy.
 - [ ] Answer deletion requests sent by email (for people who lost the machine holding their token): `DEL cdt:report:<slug>` in the Upstash console.
 
 ## How it spreads
