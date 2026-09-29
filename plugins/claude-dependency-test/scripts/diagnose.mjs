@@ -31,6 +31,7 @@ export function parseArgs(argv) {
     };
     if (a === '--json') args.json = true;
     else if (a === '--open') args.open = true;
+    else if (a === '--no-open') args.open = false;
     else if (a === '--no-html') args.html = false;
     else if (a === '--no-publish') args.publish = false;
     else if (a === '--new-link') args.newLink = true;
@@ -44,6 +45,7 @@ export function parseArgs(argv) {
     else throw new Error(`Unknown option: ${a}`);
   }
   if (args.days !== undefined && !(args.days >= 1)) throw new Error('--days must be a positive number');
+  if (!argv.includes('--no-open') && !args.json && process.stdout.isTTY) args.open = true; // npx in a terminal
   if (args.tz) new Intl.DateTimeFormat('en-US', { timeZone: args.tz }); // throws on invalid zone
   return args;
 }
@@ -143,7 +145,10 @@ export async function run(argv, env = process.env, { fetchImpl = globalThis.fetc
     if (target) openInBrowser(target);
   }
   const lines = [result.bulletin, ''];
-  if (result.published) lines.push(`  Online: ${result.published.url}${result.published.updated ? ' (updated)' : ''}`);
+  if (result.published) {
+    lines.push(`  Online: ${result.published.url}${result.published.updated ? ' (updated)' : ''}`);
+    lines.push('  Only aggregate numbers were published. Delete it: --unpublish · Stay offline next time: --no-publish');
+  }
   else if (result.publishError) lines.push(`  Not published: ${result.publishError}`);
   lines.push(`  Card:   ${result.reportPath || '(not written)'}`, renderShareFooter(result), '');
   return { result, text: lines.join('\n') };
