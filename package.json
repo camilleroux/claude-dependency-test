@@ -1,0 +1,13 @@
+{
+  "name": "claude-dependency-test",
+  "private": true,
+  "type": "module",
+  "description": "How addicted to Claude are you? Claude Code plugin + share site.",
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test plugins/claude-dependency-test/test/ site/test/",
+    "diagnose": "node plugins/claude-dependency-test/scripts/diagnose.mjs",
+    "fixtures": "node plugins/claude-dependency-test/test/fixtures/make-fixtures.mjs"
+  }
+}

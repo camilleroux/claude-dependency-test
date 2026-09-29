@@ -1,0 +1,22 @@
+{
+  "name": "claude-dependency-test",
+  "owner": {
+    "name": "Camille Roux",
+    "url": "https://www.camilleroux.com"
+  },
+  "description": "How addicted to Claude are you?",
+  "plugins": [
+    {
+      "name": "claude-dependency-test",
+      "source": "./plugins/claude-dependency-test",
+      "description": "Computes a 0-100 Claude dependency score from local Claude Code transcripts and generates a shareable card. Offline, aggregates only.",
+      "version": "1.0.0",
+      "category": "fun",
+      "tags": [
+        "stats",
+        "share-card",
+        "privacy"
+      ]
+    }
+  ]
+}

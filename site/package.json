@@ -1,0 +1,14 @@
+{
+  "name": "claude-dependency-test-site",
+  "private": true,
+  "type": "module",
+  "description": "Share site for the Claude Dependency Test: landing page, result pages, OG images and README badges. Stateless: every result lives in its URL.",
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "dev": "node scripts/sync.mjs && node scripts/serve.mjs",
+    "deploy": "vercel deploy --prod"
+  },
+  "dependencies": {
+    "@vercel/og": "^0.6.8"
+  }
+}

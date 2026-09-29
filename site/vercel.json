@@ -1,0 +1,59 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run sync",
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/robots.txt",
+      "destination": "/api/seo?f=robots"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/seo?f=sitemap"
+    },
+    {
+      "source": "/case/:slug",
+      "destination": "/api/d?slug=:slug"
+    },
+    {
+      "source": "/og/:slug",
+      "destination": "/api/og?slug=:slug"
+    },
+    {
+      "source": "/badge/:slug",
+      "destination": "/api/badge?slug=:slug"
+    },
+    {
+      "source": "/api/diagnoses/:slug",
+      "destination": "/api/diagnoses?slug=:slug"
+    },
+    {
+      "source": "/r",
+      "destination": "/api/r"
+    },
+    {
+      "source": "/og",
+      "destination": "/api/og"
+    },
+    {
+      "source": "/badge",
+      "destination": "/api/badge"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
+    }
+  ]
+}
