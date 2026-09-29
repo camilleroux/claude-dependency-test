@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- No network: this page may not load anything. Links you click still open normally. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Claude Dependency Test</title>
+<style>
+  /*__FONTS__*/
+  :root {
+    --bg: #010403; --screen: #030A06; --screen-2: #06140C; --line: #0F3A22; --line-2: #1A5C37;
+    --ph: #3BFF8C; --amber: #FFB020; --cyan: #44E0FF; --ink: #B9F7D2; --muted: #5FB386; --faint: #2E7550;
+    --display: 'VT323', ui-monospace, monospace; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    --glow: 0 0 6px rgba(59, 255, 140, .45), 0 0 22px rgba(59, 255, 140, .18);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(ellipse at 50% 0%, #04140B 0%, var(--bg) 60%) fixed, var(--bg); color: var(--ink); font: 15px/1.6 var(--mono); }
+  body::after { content: ''; position: fixed; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
+  main { max-width: 1040px; margin: 0 auto; padding: 28px 16px 64px; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 22px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+  .brand { font: 400 22px/1 var(--display); letter-spacing: .08em; color: var(--ph); text-shadow: var(--glow); }
+  .brand::before { content: '● '; color: #FF4D4D; }
+  h1 { font: 400 clamp(38px, 6vw, 60px)/1 var(--display); margin: 8px 0 0; color: var(--ph); text-shadow: var(--glow); text-transform: uppercase; }
+  .card { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--line-2); box-shadow: 0 0 0 6px #050b08, 0 0 0 7px var(--line), 0 30px 80px -30px rgba(59,255,140,.25); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 8px; }
+  button, .btn { appearance: none; border: 1px solid var(--line-2); background: transparent; color: var(--ph); border-radius: 2px; padding: 8px 14px 7px; font: 400 20px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  button:hover, .btn:hover { background: var(--ph); color: #000; }
+  button.primary, .primary-link { background: var(--ph); border-color: var(--ph); color: #000; box-shadow: var(--glow); }
+  .status { min-height: 1.5em; color: var(--amber); font: 400 18px/1.4 var(--display); }
+  section { background: var(--screen); border: 1px solid var(--line-2); border-radius: 6px; padding: 18px 20px; margin-top: 18px; }
+  h2 { font: 400 22px/1 var(--display); letter-spacing: .1em; color: var(--muted); margin: 0 0 14px; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 400 17px/1 var(--display); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+  td.num { font-family: var(--mono); white-space: nowrap; color: var(--ph); }
+  .flag { color: var(--amber); font: 400 17px/1 var(--display); letter-spacing: .06em; }
+  .table-wrap { overflow-x: auto; }
+  pre { background: var(--screen-2); border: 1px solid var(--line); padding: 12px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; font-size: 13px; margin: 0 0 10px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  code { font-family: var(--mono); color: var(--ph); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .fact { border: 1px solid var(--line-2); padding: 12px 14px; font-size: 13px; }
+  .fact b { display: block; font: 400 42px/1 var(--display); color: var(--cyan); text-shadow: 0 0 10px rgba(68,224,255,.4); }
+  .fact small { display: block; color: var(--muted); margin-top: 4px; }
+  footer { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="brand">CLAUDE DEPENDENCY MONITOR</div>
+      <h1>Your chart is ready.</h1>
+    </div>
+  </header>
+
+  <canvas id="card" class="card" width="1200" height="630" role="img" aria-label="Claude Dependency Test result card"></canvas>
+
+  <div class="actions">
+    <a class="btn primary-link" id="x" target="_blank" rel="noopener">Post on X</a>
+    <a class="btn primary-link" id="linkedin" target="_blank" rel="noopener">LinkedIn</a>
+    <a class="btn primary-link" id="bluesky" target="_blank" rel="noopener">Bluesky</a>
+    <a class="btn primary-link" id="mastodon" target="_blank" rel="noopener">Mastodon</a>
+  </div>
+  <div class="actions" style="margin-top:0">
+    <a class="btn" id="online" target="_blank" rel="noopener" hidden>Open online report ↗</a>
+    <button id="copy-link" type="button">Copy share link</button>
+    <button id="save" type="button">Save as PNG</button>
+    <button id="copy-img" type="button">Copy image</button>
+  </div>
+  <div class="status" id="status" role="status"></div>
+
+  <section>
+    <h2>Share text</h2>
+    <pre id="share-text"></pre>
+    <p class="muted" id="share-note"></p>
+  </section>
+
+  <section>
+    <h2>Usage stats</h2>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section>
+    <h2>Full lab report</h2>
+    <p class="muted" id="meta"></p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Symptom</th><th>Result</th><th>Reference</th><th>Points</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <p class="muted" id="renorm" hidden>Some criteria could not be measured reliably, so the score is renormalized over the ones that could.</p>
+  </section>
+
+  <section>
+    <h2>README badge</h2>
+    <pre id="badge"></pre>
+    <p class="muted">Paste it in your GitHub profile README. The badge is served by the share site and only encodes score and stage.</p>
+  </section>
+
+  <footer>Not an actual medical diagnosis. Computed locally from your Claude Code transcripts. No account, no analytics.</footer>
+</main>
+<script type="module">
+/*__CARD_JS__*/
+
+const DATA = "__DATA_JSON__";
+const $ = (id) => document.getElementById(id);
+const root = document.documentElement;
+const card = { ...DATA.card, ecg: DATA.ecg, headlines: DATA.headlines };
+const credit = DATA.author && DATA.author.cardCredit;
+const draw = () => renderCardToCanvas($('card'), card, { siteLabel: DATA.share.siteLabel, credit, scale: 2 });
+draw();
+if (document.fonts) Promise.all([document.fonts.load('40px VT323'), document.fonts.load('16px "IBM Plex Mono"')]).then(draw, () => {});
+
+const status = (msg) => { $('status').textContent = msg; };
+const exportCanvas = () => renderCardToCanvas(document.createElement('canvas'), card, { siteLabel: DATA.share.siteLabel, credit, scale: 1 });
+
+$('save').addEventListener('click', () => {
+  exportCanvas().toBlob((blob) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `claude-dependency-${DATA.card.score}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    status('Saved a 1200×630 PNG. Rendered in your browser, nothing uploaded.');
+  }, 'image/png');
+});
+$('copy-img').addEventListener('click', () => {
+  exportCanvas().toBlob(async (blob) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      status('Image copied. Paste it into Slack, X or LinkedIn.');
+    } catch { status('Your browser blocked image copy here. Use "Save as PNG" instead.'); }
+  }, 'image/png');
+});
+$('copy-link').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(DATA.share.url); status('Share link copied.'); }
+  catch { status(DATA.share.url); }
+});
+
+const intents = shareIntents(DATA.share.url, DATA.share.text, (DATA.author && DATA.author.via) || {});
+for (const k of ['x', 'linkedin', 'bluesky', 'mastodon']) $(k).href = intents[k];
+$('share-text').textContent = `${DATA.share.text}\n${DATA.share.url}`;
+if (DATA.published) {
+  $('online').href = DATA.published.url;
+  $('online').hidden = false;
+  $('share-note').textContent = `Your online report (${DATA.published.url}) holds aggregate numbers only: score, symptoms, prompts per hour, weekday and day, and model mix. No prompts, code, file paths or project names were sent. Delete it anytime with /claude-dependency-test:diagnose --unpublish.`;
+} else {
+  const fields = ['score', 'stage', 'archetype', 'observation days'].concat(symptomRows(DATA.card).map((r) => r.label.toLowerCase()));
+  $('share-note').textContent = `Nothing was uploaded. The share link carries only what is on the card: ${fields.join(', ')}.`;
+}
+$('badge').textContent = `[![Claude Dependency: Stage ${DATA.card.stage}](${DATA.share.badge})](${DATA.share.url})`;
+
+const w = DATA.window;
+const mix = Object.entries(DATA.modelMix).filter(([, v]) => v >= 0.005).map(([k, v]) => `${k} ${Math.round(v * 100)}%`).join(' · ');
+$('meta').textContent = `Observed ${w.days} days (${w.startDay} → ${w.endDay}, ${w.timeZone}) · ${DATA.sample.prompts.toLocaleString('en-US')} prompts · ${DATA.sample.sessions} sessions · peak hour ${DATA.peakHour}${mix ? ' · ' + mix : ''}`;
+for (const r of DATA.rows) {
+  const tr = document.createElement('tr');
+  for (const [v, cls] of [[r.label], [r.value, 'num'], [r.ref], [r.points, 'num'], [r.flag, 'flag']]) {
+    const td = document.createElement('td');
+    td.textContent = v;
+    if (cls) td.className = cls;
+    tr.appendChild(td);
+  }
+  $('rows').appendChild(tr);
+}
+$('renorm').hidden = !DATA.renormalized;
+for (const f of DATA.facts) {
+  const d = document.createElement('div');
+  d.className = 'fact';
+  const b = document.createElement('b');
+  b.textContent = f.value;
+  const small = document.createElement('small');
+  small.textContent = f.caption;
+  d.append(b, document.createTextNode(f.label), small);
+  $('facts').appendChild(d);
+}
+</script>
+</body>
+</html>

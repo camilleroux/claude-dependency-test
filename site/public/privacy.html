@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Claude Dependency Test</title>
+<meta name="description" content="What the Claude Dependency Test stores, why, for how long, and how to delete it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="stylesheet" href="/site.css">
+<style>
+  article { max-width: 72ch; padding: 16px 0 40px; }
+  article h2 { font-size: 26px; margin-top: 36px; }
+  article li { margin: 4px 0; }
+  article td, article th { font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/">CLAUDE DEPENDENCY TEST</a>
+    <span class="nav-meta">Privacy</span>
+  </nav>
+  <article>
+    <p class="kicker">Privacy policy · last updated 2026-09-28</p>
+    <h1>Privacy</h1>
+    <p class="lead" style="max-width:none">Short version: your score is computed on your machine. When you publish, we store aggregate numbers only, for up to a year, and you can delete them anytime.</p>
+
+    <h2>Who is responsible</h2>
+    <p>This site and the plugin are published by <strong>Camille Roux</strong> (<a href="https://www.camilleroux.com/?ref=claude-dependency-test">camilleroux.com</a>), who is the data controller for the data described below. Contact: <a href="https://www.camilleroux.com/contact/?ref=claude-dependency-test">contact form</a>.</p>
+    <p>Hosting: Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA. Database: Upstash, Inc., in its European Union region.</p>
+    <p>This is an unofficial fan project, not affiliated with Anthropic.</p>
+
+    <h2>On your machine (not collected)</h2>
+    <p>The plugin reads your local Claude Code transcripts to compute the score. It only uses timestamps, message types, model names, tool names, token counts and error markers. It never reads or sends the text of your prompts or of Claude's answers, your code, file paths, project names or git branches. That processing happens on your computer and we receive none of it. The exact list of fields is in the <a href="https://github.com/camilleroux/claude-dependency-test#privacy">README</a>.</p>
+
+    <h2>What we store when you publish</h2>
+    <p>Running <code>/claude-dependency-test:diagnose</code> publishes your report, unless you add <code>--no-publish</code>. We then store one record containing:</p>
+    <ul>
+      <li>your score, stage and archetype, and the value and points of each of the 7 symptoms;</li>
+      <li>counts: prompts, sessions, active days and hours, prompts per hour of day, per weekday and per day of the observation window (with its start and end dates);</li>
+      <li>usage totals: tokens, tool calls per built-in tool (MCP tools grouped, no server names), subagents, interruptions, context compactions, longest turn, number of projects (a count, no names), latest and earliest prompt times;</li>
+      <li>the share of responses per model family (Opus, Sonnet…);</li>
+      <li>a hash of your deletion token, and the creation and update dates.</li>
+    </ul>
+    <p>The server rejects any text that is not a number, a date or a value from a fixed list, so the record cannot contain anything you typed. It contains no name, email, account, IP address or device identifier. We don't know who you are unless you tell people the link is yours.</p>
+    <p><strong>Your report is public to anyone who has the link.</strong> Result pages ask search engines not to index them, but a link you post can be seen and shared by others. Don't publish if you don't want your usage patterns (for example, the hours and days you worked) to be visible.</p>
+
+    <h2>Security and abuse prevention</h2>
+    <p>To limit abuse, each publication or update increments a counter keyed on a salted, irreversible hash of your IP address. The counter is deleted after one hour. Our hosting provider keeps technical request logs (including IP addresses) for a short period as part of running the service.</p>
+
+    <h2>Why, and on what legal basis</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Purpose</th><th>Legal basis (GDPR)</th><th>Kept for</th></tr></thead>
+      <tbody>
+        <tr><td>Publishing the report you asked for, its preview image and badge</td><td>Performance of the service you request, Art. 6(1)(b)</td><td>365 days after your last update, then deleted automatically</td></tr>
+        <tr><td>Rate limiting with a salted IP hash</td><td>Legitimate interest in preventing abuse, Art. 6(1)(f)</td><td>1 hour</td></tr>
+        <tr><td>Hosting request logs</td><td>Legitimate interest in running and securing the site, Art. 6(1)(f)</td><td>Per the host's log retention (kept to the minimum available)</td></tr>
+      </tbody>
+    </table></div>
+    <p>The report is a joke about usage statistics. It is not health data and not a medical assessment.</p>
+
+    <h2>Who receives it</h2>
+    <p>Vercel (hosting and content delivery) and Upstash (database) process the data on our behalf as processors, under data processing agreements. Vercel is based in the United States. Transfers rely on the EU-U.S. Data Privacy Framework and the European Commission's standard contractual clauses. We don't sell or share data with anyone else, and we don't use advertising or analytics.</p>
+
+    <h2>Cookies</h2>
+    <p>None. No analytics, no trackers, no third-party scripts. If you switch the color theme, that preference is saved in your browser's local storage, on your device only.</p>
+
+    <h2>Your rights</h2>
+    <ul>
+      <li><strong>Delete</strong> your report anytime: run <code>/claude-dependency-test:diagnose --unpublish</code> on the machine that published it. Lost that machine? Send the link of your report through the <a href="https://www.camilleroux.com/contact/?ref=claude-dependency-test">contact form</a> and we'll delete it.</li>
+      <li><strong>Rectify</strong>: run the test again, it replaces the published numbers.</li>
+      <li><strong>Access and portability</strong>: your report page shows everything we store about it, and the plugin's <code>--json</code> output gives it in a machine-readable format.</li>
+      <li><strong>Object or restrict</strong>: use <code>--no-publish</code>, or use the <a href="https://www.camilleroux.com/contact/?ref=claude-dependency-test">contact form</a>.</li>
+    </ul>
+    <p>Because we can't tell who owns a report, we may ask you to prove it (for example by publishing an update from your machine) before acting on a request. You can also complain to your data protection authority. In France, that's the <a href="https://www.cnil.fr/en/complaints" rel="noopener">CNIL</a>.</p>
+  </article>
+  <footer>Not an actual medical diagnosis. Unofficial, not affiliated with Anthropic. <a href="/">Home</a></footer>
+</div>
+<script type="module">
+import { bindThemeToggle } from '/ui.js';
+bindThemeToggle(document.getElementById('theme'));
+</script>
+</body>
+</html>

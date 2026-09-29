@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Dependency Test · How addicted to Claude Code are you?</title>
+<meta name="description" content="A free Claude Code plugin that turns your usage stats into a dependency score out of 100, a fake medical diagnosis and a shareable chart: hours, streaks, subagents, words written by Claude. Your prompts never leave your machine.">
+<meta name="author" content="Camille Roux">
+<link rel="author" href="https://www.camilleroux.com/?ref=claude-dependency-test">
+<meta name="twitter:creator" content="@CamilleRoux">
+<meta name="twitter:site" content="@CamilleRoux">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Claude Dependency Test">
+<meta property="og:description" content="How addicted to Claude are you? Get your score, stage and official-looking (fake) diagnosis. Computed locally, shared on your terms.">
+<meta property="og:image" content="/og/demo">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="preload" href="/fonts/VT323-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="theme-color" content="#010403">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebApplication", "name": "Claude Dependency Test", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux, Windows (Claude Code)", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "description": "A Claude Code plugin that scores your Claude dependency out of 100 from local usage stats and publishes a shareable chart.", "author": {"@id": "https://www.camilleroux.com/#person"}, "isAccessibleForFree": true}, {"@type": "Person", "@id": "https://www.camilleroux.com/#person", "name": "Camille Roux", "url": "https://www.camilleroux.com/", "sameAs": ["https://x.com/CamilleRoux", "https://bsky.app/profile/camilleroux.com", "https://www.linkedin.com/in/camilleroux", "https://mastodon.social/@camilleroux", "https://github.com/camilleroux"]}]}</script>
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 40px; align-items: center; padding: 28px 0 64px; }
+  @media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+  .demo-caption { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; font: 400 18px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .pill-live { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/">CLAUDE DEPENDENCY TEST</a>
+    <div class="nav-links">
+      <a class="btn" id="gh" href="#" rel="noopener">GitHub</a>
+      <span class="nav-meta">Claude Dependency Monitor</span>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <p class="kicker">Claude Dependency Test · a deeply unscientific screening</p>
+      <h1>How addicted to Claude are you?</h1>
+      <p class="lead">A Claude Code plugin that reads your local usage patterns, scores your dependency out of 100 and publishes your lab report. Your prompts never leave your machine.</p>
+      <p class="byline">A side project by <a href="https://www.camilleroux.com/?ref=claude-dependency-test" rel="author">Camille Roux</a> · follow <a href="https://x.com/CamilleRoux" rel="me noopener" target="_blank">@CamilleRoux</a></p>
+      <div class="install" id="install"></div>
+      <p class="muted small" style="margin-top:12px">Run inside Claude Code. Needs Node.js 18+. Takes a couple of seconds. <a href="/case/demo">See an example report →</a></p>
+    </div>
+    <div>
+      <canvas id="demo" class="card-canvas" width="1200" height="630" role="img" aria-label="Example result card"></canvas>
+      <div class="demo-caption"><span>Example patients</span><span class="pill-live" id="demo-name"></span></div>
+    </div>
+  </header>
+
+  <section class="block">
+    <p class="kicker">Diagnosis</p>
+    <h2>The five stages</h2>
+    <p class="muted" style="max-width:60ch">Your score out of 100 maps to a stage. There is no shame at any stage. There is also no cure.</p>
+    <div class="stages" id="stages"></div>
+  </section>
+
+  <section class="block">
+    <p class="kicker">Conditions</p>
+    <h2>What's your diagnosis?</h2>
+    <p class="muted" style="max-width:60ch">Eight entirely made-up conditions, each with its own diagnostic code. Yours comes from your most severe symptom. Collect them all (please don't).</p>
+    <div class="grid cols-4" id="archetypes"></div>
+  </section>
+
+  <section class="block" id="methodology">
+    <p class="kicker">Methodology</p>
+    <h2>How the score works</h2>
+    <p class="muted" style="max-width:66ch">Nine symptoms, explicit rules. The score measures excess (hours, streaks, volume, delegation), never <em>when</em> you work. Each one earns points linearly between two thresholds. If a symptom can't be measured reliably from your data, it's skipped and the score is renormalized over the others: never a fake zero.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Symptom</th><th>Points</th><th>0 points at</th><th>Full points at</th></tr></thead>
+      <tbody id="scoring"></tbody>
+    </table></div>
+    <p class="muted small">Sessions end after 30 minutes of inactivity. Night means 00:00-05:00 in your time zone. The observation window is the transcript history Claude Code keeps (30 days by default).</p>
+  </section>
+
+  <section class="block">
+    <p class="kicker">Privacy first</p>
+    <h2>Your prompts stay yours</h2>
+    <div class="two">
+      <div class="tile">
+        <h3>What gets published</h3>
+        <ul class="check">
+          <li>Score, stage and diagnosis</li>
+          <li>Each symptom's value and points</li>
+          <li>Prompt counts per hour, weekday and day</li>
+          <li>Model family shares (Opus, Sonnet…)</li>
+          <li>Numbers and fixed labels only: the server rejects any free text</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>What never leaves your machine</h3>
+        <ul class="check cross">
+          <li>The text of your prompts or Claude's answers</li>
+          <li>Code, file paths, project names, git branches</li>
+          <li>Tool inputs and outputs, MCP server names</li>
+          <li>Anything identifying you: no account, no analytics, no IP address kept with your report</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted" style="max-width:66ch;margin-top:16px">The score is computed on your machine by a deterministic script; Claude never reads your transcripts for it. Re-running updates the same link. Delete your page anytime with <code>--unpublish</code>, or stay fully offline with <code>--no-publish</code>. Pages expire after a year without an update.</p>
+  </section>
+
+  <section class="block doctor">
+    <p class="kicker">The doctor</p>
+    <h2>Who's behind the diagnosis</h2>
+    <p style="max-width:62ch">Claude Dependency Test is a side project by <a href="https://www.camilleroux.com/?ref=claude-dependency-test" rel="author">Camille Roux</a>, built (fittingly) with an unhealthy amount of Claude Code. New symptoms, conditions and experiments are announced on social media first.</p>
+    <div class="btn-row" id="follow-buttons"></div>
+    <p class="muted small" style="margin-top:14px">More projects and articles on <a href="https://www.camilleroux.com/?ref=claude-dependency-test">camilleroux.com</a>.</p>
+  </section>
+
+  <section class="block">
+    <p class="kicker">FAQ</p>
+    <details><summary>Is this an official Anthropic product?</summary><p class="muted">No. It's an unofficial fan project, not affiliated with or endorsed by Anthropic.</p></details>
+    <details><summary>Is it an actual medical diagnosis?</summary><p class="muted">Absolutely not. It's a joke with honest math. If you're worried about your screen time, talk to a human professional.</p></details>
+    <details><summary>Why is my observation window only 30 days?</summary><p class="muted">Claude Code deletes transcripts older than <code>cleanupPeriodDays</code> (30 by default). The test only sees what's still on disk.</p></details>
+    <details><summary>Can I cheat?</summary><p class="muted">The site only checks that the numbers are plausible, so technically yes. You could also just use Claude less. We know which one you'll pick.</p></details>
+  </section>
+
+  <footer>
+    <p class="made-by">Made by <a href="https://www.camilleroux.com/?ref=claude-dependency-test" rel="author">Camille Roux</a>. More experiments and articles on <a href="https://www.camilleroux.com/?ref=claude-dependency-test">camilleroux.com</a>.</p>
+    <p class="follow-foot">Follow the doctor: <span id="follow"></span></p>
+    Not an actual medical diagnosis. Unofficial, not affiliated with Anthropic. Made with an unhealthy amount of Claude. · <a href="/privacy">Privacy</a>
+  </footer>
+</div>
+<script type="module">
+import { ARCHETYPES, STAGES } from '/card.js';
+import { mountCard, renderInstall } from '/ui.js';
+import { FOLLOW, REPO } from '/site-config.js';
+document.getElementById('follow-buttons').replaceChildren(...FOLLOW.map((f) =>
+  Object.assign(document.createElement('a'), { className: 'btn', href: f.url, textContent: `${f.network} ${f.handle}`, rel: 'me noopener', target: '_blank' })));
+document.getElementById('follow').replaceChildren(...FOLLOW.flatMap((f, i) => {
+  const a = Object.assign(document.createElement('a'), { href: f.url, textContent: `${f.network} ${f.handle}`, rel: 'noopener me', target: '_blank' });
+  return i ? [document.createTextNode(' · '), a] : [a];
+}));
+
+document.getElementById('gh').href = `https://github.com/${REPO}`;
+renderInstall(document.getElementById('install'));
+
+const series = (seed, base) => Array.from({ length: 30 }, (_, i) => ((i * seed) % 11 === 3 ? 0 : Math.round(base * (0.35 + ((i * seed * 7) % 13) / 13))));
+const demos = [
+  { score: 73, stage: 4, archetype: 'hypergraphia', days: 30, ecg: series(3, 90), headlines: [{ label: 'WORDS WRITTEN BY CLAUDE', value: '7.4M', color: 'cyan' }, { label: 'SUBAGENTS LAUNCHED', value: '96', color: 'amber' }, { label: 'LONGEST RUN WITHOUT YOU', value: '2 H 22', color: 'amber' }, { label: 'LONGEST SESSION', value: '6.4 H', color: 'magenta' }], sym: { h: 5.2, ad: 87, sk: 12, p: 64, o: 71 } },
+  { score: 91, stage: 5, archetype: 'streak-dependency', days: 30, ecg: series(5, 140), sym: { h: 7.4, ad: 100, sk: 30, p: 112, w: 31, l: 6 } },
+  { score: 47, stage: 3, archetype: 'middle-manager', days: 30, ecg: series(7, 60), sym: { h: 3.1, ad: 53, sk: 4, sa: 140, o: 38 } },
+  { score: 16, stage: 1, archetype: 'recreational-use', days: 30, ecg: series(4, 20), sym: { h: 0.8, ad: 20, sk: 2, p: 7, o: 12 } },
+];
+let i = 0;
+const canvas = document.getElementById('demo');
+const name = document.getElementById('demo-name');
+const { redraw } = mountCard(canvas, () => demos[i], location.host);
+const show = () => { name.textContent = `${ARCHETYPES[demos[i].archetype].name} · ${demos[i].score}/100`; };
+show();
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  setInterval(() => { i = (i + 1) % demos.length; show(); redraw(); }, 4000);
+}
+
+const colors = ['--s1', '--s2', '--s3', '--s4', '--s5'];
+const ranges = ['0-20', '21-40', '41-60', '61-80', '81-100'];
+document.getElementById('stages').replaceChildren(...[1, 2, 3, 4, 5].map((n) => {
+  const d = document.createElement('div');
+  d.className = 'stage';
+  d.style.setProperty('--c', `var(${colors[n - 1]})`);
+  d.innerHTML = `<b>STAGE ${n} · ${ranges[n - 1]}</b><strong></strong><span></span>`;
+  d.querySelector('strong').textContent = STAGES[n].name;
+  d.querySelector('span').textContent = STAGES[n].prognosis;
+  return d;
+}));
+
+const trigger = { 'deep-focus': 'Active hours', 'streak-dependency': 'Regularity', 'session-overextension': 'Marathon sessions', 'middle-manager': 'Delegation', 'hypergraphia': 'Output', 'prompt-hyperactivity': 'Prompts per day',
+  'limit-collision': 'Usage limits', 'opus-affluenza': 'Opus share', 'recreational-use': 'No severe symptom' };
+document.getElementById('archetypes').replaceChildren(...Object.entries(ARCHETYPES).map(([slug, a]) => {
+  const t = document.createElement('div');
+  t.className = 'tile';
+  t.innerHTML = '<div class="emoji"></div><p class="kicker" style="margin:0 0 4px"></p><h3></h3><p class="muted small" style="margin:0"></p><span class="tag"></span>';
+  t.querySelector('.emoji').textContent = a.emoji;
+  t.querySelector('.kicker').textContent = a.code;
+  t.querySelector('h3').textContent = a.name;
+  t.querySelector('p.muted').textContent = a.tagline;
+  t.querySelector('.tag').textContent = trigger[slug];
+  return t;
+}));
+
+const fmt = (metric, v) => {
+  if (/Share$/.test(metric)) return `${Math.round(v * 100)}%`;
+  if (metric === 'activeHoursPerActiveDay') return `${v} h/day`;
+  if (metric === 'longestStreakDays') return `${v}-day streak`;
+  if (metric === 'limitHitsPer30Days') return `${v} / 30 days`;
+  if (metric === 'promptsPerActiveDay') return `${v} prompts/day`;
+  if (metric === 'longestSessionHours') return `${v} h session`;
+  if (metric === 'subagentsPerActiveDay') return `${v} subagents/day`;
+  if (metric === 'wordsPerActiveDay') return `${v >= 1000 ? `${Math.round(v / 1000)}K` : v} words/day`;
+  return String(v);
+};
+const partLabel = { activeDaysShare: 'Active days', longestStreakDays: 'Longest streak' };
+fetch('/scoring.json').then((r) => r.json()).then((cfg) => {
+  const rows = [];
+  const row = (cells) => {
+    const tr = document.createElement('tr');
+    cells.forEach((v, k) => { const td = document.createElement('td'); td.textContent = v; if (k) td.className = 'num'; tr.appendChild(td); });
+    rows.push(tr);
+  };
+  for (const c of Object.values(cfg.criteria)) {
+    if (c.parts.length === 1) row([c.label, String(c.points), fmt(c.parts[0].metric, c.parts[0].from), fmt(c.parts[0].metric, c.parts[0].to)]);
+    else {
+      row([c.label, String(c.points), '', '']);
+      for (const p of c.parts) row([`  ↳ ${partLabel[p.metric] || p.metric} (${Math.round(p.weight * 100)}%)`, '', fmt(p.metric, p.from), fmt(p.metric, p.to)]);
+    }
+  }
+  document.getElementById('scoring').replaceChildren(...rows);
+});
+
+</script>
+</body>
+</html>

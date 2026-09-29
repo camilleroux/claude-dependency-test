@@ -1,0 +1,203 @@
+{
+  "$comment": "Claude Dependency Test scoring rules (v2). Each criterion earns points linearly: 0 at `from`, full points at `to`, clamped in between. The score measures excess (time, streaks, volume, delegation), never *when* people work: night and weekend activity are shown but not scored. Criteria that cannot be measured reliably are skipped and the total is renormalized over the remaining points.",
+  "version": 2,
+  "sessionGapMinutes": 30,
+  "nightHours": {
+    "start": 0,
+    "end": 5
+  },
+  "defaultCleanupPeriodDays": 30,
+  "minSamples": {
+    "prompts": 5,
+    "modelMessages": 5,
+    "windowDaysForRegularity": 7,
+    "windowDaysForWeekend": 7
+  },
+  "criteria": {
+    "hours": {
+      "label": "Active hours per active day",
+      "points": 20,
+      "archetype": "deep-focus",
+      "parts": [
+        {
+          "metric": "activeHoursPerActiveDay",
+          "from": 0.5,
+          "to": 8,
+          "weight": 1
+        }
+      ]
+    },
+    "streak": {
+      "label": "Longest streak",
+      "points": 15,
+      "archetype": "streak-dependency",
+      "parts": [
+        {
+          "metric": "longestStreakDays",
+          "from": 2,
+          "to": 21,
+          "weight": 1,
+          "capToWindow": true
+        }
+      ]
+    },
+    "presence": {
+      "label": "Presence (days active)",
+      "points": 10,
+      "archetype": "streak-dependency",
+      "parts": [
+        {
+          "metric": "activeDaysShare",
+          "from": 0.15,
+          "to": 0.9,
+          "weight": 1
+        }
+      ]
+    },
+    "intensity": {
+      "label": "Intensity (prompts per active day)",
+      "points": 10,
+      "archetype": "prompt-hyperactivity",
+      "parts": [
+        {
+          "metric": "promptsPerActiveDay",
+          "from": 5,
+          "to": 80,
+          "weight": 1
+        }
+      ]
+    },
+    "marathon": {
+      "label": "Marathon (longest session)",
+      "points": 10,
+      "archetype": "session-overextension",
+      "parts": [
+        {
+          "metric": "longestSessionHours",
+          "from": 1,
+          "to": 6,
+          "weight": 1
+        }
+      ]
+    },
+    "delegation": {
+      "label": "Delegation (subagents per active day)",
+      "points": 10,
+      "archetype": "middle-manager",
+      "parts": [
+        {
+          "metric": "subagentsPerActiveDay",
+          "from": 0,
+          "to": 8,
+          "weight": 1
+        }
+      ]
+    },
+    "output": {
+      "label": "Output (words written by Claude per active day)",
+      "points": 10,
+      "archetype": "hypergraphia",
+      "parts": [
+        {
+          "metric": "wordsPerActiveDay",
+          "from": 15000,
+          "to": 300000,
+          "weight": 1
+        }
+      ]
+    },
+    "limits": {
+      "label": "Usage limits hit (per 30 days)",
+      "points": 10,
+      "archetype": "limit-collision",
+      "parts": [
+        {
+          "metric": "limitHitsPer30Days",
+          "from": 0,
+          "to": 8,
+          "weight": 1
+        }
+      ]
+    },
+    "opus": {
+      "label": "Opus share",
+      "points": 5,
+      "archetype": "opus-affluenza",
+      "parts": [
+        {
+          "metric": "opusShare",
+          "from": 0,
+          "to": 1,
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "archetypes": {
+    "minRatio": 0.3,
+    "fallback": "recreational-use"
+  },
+  "stages": [
+    {
+      "stage": 1,
+      "max": 20
+    },
+    {
+      "stage": 2,
+      "max": 40
+    },
+    {
+      "stage": 3,
+      "max": 60
+    },
+    {
+      "stage": 4,
+      "max": 80
+    },
+    {
+      "stage": 5,
+      "max": 100
+    }
+  ],
+  "share": {
+    "baseUrl": "https://dependency.camilleroux.com",
+    "$comment": "Override baseUrl with the CDT_SHARE_BASE_URL environment variable. `follow` lists the author's accounts shown at the end of every diagnosis; leave a url empty to hide it.",
+    "follow": [
+      {
+        "network": "X",
+        "handle": "@CamilleRoux",
+        "url": "https://x.com/CamilleRoux"
+      },
+      {
+        "network": "Bluesky",
+        "handle": "@camilleroux.com",
+        "url": "https://bsky.app/profile/camilleroux.com"
+      },
+      {
+        "network": "LinkedIn",
+        "handle": "Camille Roux",
+        "url": "https://www.linkedin.com/in/camilleroux"
+      },
+      {
+        "network": "Mastodon",
+        "handle": "@camilleroux@mastodon.social",
+        "url": "https://mastodon.social/@camilleroux"
+      },
+      {
+        "network": "GitHub",
+        "handle": "camilleroux",
+        "url": "https://github.com/camilleroux"
+      }
+    ],
+    "author": {
+      "name": "Camille Roux",
+      "url": "https://www.camilleroux.com/?ref=claude-dependency-test",
+      "via": {
+        "x": "CamilleRoux",
+        "bluesky": "camilleroux.com",
+        "mastodon": "camilleroux@mastodon.social"
+      },
+      "cardCredit": "@CamilleRoux"
+    }
+  }
+}
