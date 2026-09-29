@@ -1,0 +1,29 @@
+{
+  "name": "claude-dependency-test",
+  "version": "1.0.0",
+  "description": "How addicted to Claude are you? Scores your Claude Code dependency out of 100 from local usage stats and publishes a shareable patient chart. Your prompts never leave your machine.",
+  "type": "module",
+  "bin": {
+    "claude-dependency-test": "scripts/diagnose.mjs"
+  },
+  "files": [
+    "scripts/",
+    "assets/",
+    "config/",
+    ".claude-plugin/plugin.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["claude", "claude-code", "usage", "stats", "wrapped", "fun", "privacy"],
+  "homepage": "https://dependency.camilleroux.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camilleroux/claude-dependency-test.git",
+    "directory": "plugins/claude-dependency-test"
+  },
+  "bugs": "https://github.com/camilleroux/claude-dependency-test/issues",
+  "author": "Camille Roux (https://www.camilleroux.com)",
+  "license": "MIT"
+}
