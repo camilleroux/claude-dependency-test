@@ -17,6 +17,26 @@ export const STAGES = {
 
 // "Archetypes" are fake medical conditions, each with a made-up diagnostic code.
 // (The field is still called `archetype` in data and URLs.)
+export const STAGES_FR = {
+  1: { name: 'Usage occasionnel', prognosis: 'Relation saine détectée. Étrangement saine. Surveiller les rechutes.' },
+  2: { name: 'Régulier', prognosis: "Attachement léger. Le patient sait encore écrire une regex seul, les bons jours." },
+  3: { name: 'Dépendant', prognosis: "Le patient dit « je demande à Claude » plusieurs fois par jour. Stable, de bonne humeur." },
+  4: { name: 'Chronique', prognosis: "L'onglet du terminal ne se ferme jamais. Pronostic : productivité alarmante." },
+  5: { name: 'Terminal', prognosis: 'Le patient vit dans le terminal. Littéralement. Aucun remède connu, aucun regret.' },
+};
+
+export const ARCHETYPES_FR = {
+  'recreational-use': { name: 'Usage récréatif', tagline: "Consomme Claude en société. Peut arrêter quand il veut. En théorie.", alarm: '● STABLE' },
+  'deep-focus': { name: 'Syndrome de concentration profonde chronique', tagline: 'Des sessions si longues qu\'elles mériteraient un entracte.', alarm: '▲ SESSIONS LONGUES' },
+  'streak-dependency': { name: 'Syndrome de dépendance à la série', tagline: "N'a pas manqué un seul jour. Claude a maintenant les clés de l'appartement.", alarm: '▲ SÉRIE ÉLEVÉE' },
+  'session-overextension': { name: 'Trouble de la session à rallonge', tagline: 'Les sessions se terminent quand la batterie du portable lâche.', alarm: '▲ SESSION TROP LONGUE' },
+  'middle-manager': { name: 'Syndrome du manager intermédiaire', tagline: "Dirige une équipe d'IA. N'a jamais rencontré aucun de ses membres.", alarm: '▲ EFFECTIF ÉLEVÉ' },
+  'hypergraphia': { name: 'Hypergraphie par procuration', tagline: 'Claude écrit un roman par jour pour ce patient.', alarm: '▲ PRODUCTION ÉLEVÉE' },
+  'prompt-hyperactivity': { name: "Trouble de l'hyperactivité promptique", tagline: 'Tape plus vite que Claude ne dit « Vous avez tout à fait raison ».', alarm: '▲ DÉBIT DE PROMPTS ÉLEVÉ' },
+  'limit-collision': { name: 'Collision chronique avec la limite', tagline: "Tutoie l'écran de limite d'usage.", alarm: '▲ LIMITE ATTEINTE' },
+  'opus-affluenza': { name: 'Affluenza Opus', tagline: 'Seul le meilleur modèle fera l\'affaire.', alarm: '▲ DOSE D\'OPUS ÉLEVÉE' },
+};
+
 export const ARCHETYPES = {
   'recreational-use': { name: 'Recreational Use', code: 'CDT-00.1', tagline: 'Takes Claude socially. Can stop anytime. Probably.', emoji: '🍵', alarm: '● STABLE' },
   'deep-focus': { name: 'Chronic Deep-Focus Syndrome', code: 'CDT-25.7', tagline: 'Sessions so long they need an intermission.', emoji: '⏳', alarm: '▲ SESSION LENGTH HIGH' },
@@ -95,7 +115,12 @@ export function shareUrl(baseUrl, card) {
   return `${String(baseUrl).replace(/\/+$/, '')}/r?${encodeCard(card)}`;
 }
 
-export function shareText(card) {
+export function shareText(card, lang = 'en') {
+  if (lang === 'fr') {
+    const st = STAGES_FR[card.stage];
+    const ar = ARCHETYPES_FR[card.archetype];
+    return `Je viens de passer le Claude Dependency Test : ${card.score}/100, stade ${card.stage} (${st.name.toLowerCase()}).\nDiagnostic : ${ar.name} ${ARCHETYPES[card.archetype].emoji}\nEt toi, à quel point es-tu accro à Claude ?`;
+  }
   const st = STAGES[card.stage];
   const ar = ARCHETYPES[card.archetype];
   return `Just got my Claude Dependency Test results: ${card.score}/100, Stage ${card.stage} (${st.name}).\nDiagnosis: ${ar.name} ${ar.emoji}\nHow addicted to Claude are you?`;
@@ -141,43 +166,53 @@ export const WORDS_PER_TOKEN = 0.75;
 export const WAR_AND_PEACE_WORDS = 587_287;
 const HARRY_POTTER_SERIES_TOKENS = 1_084_170 / WORDS_PER_TOKEN;
 
-export function compact(n) {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(n >= 1e10 ? 0 : 1)}B`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`;
-  if (n >= 1e4) return `${Math.round(n / 1e3)}K`;
-  return Math.round(n).toLocaleString('en-US');
+export function compact(n, lang = 'en') {
+  const fr = lang === 'fr';
+  const d = (x, digits) => (fr ? x.toFixed(digits).replace('.', ',') : x.toFixed(digits));
+  if (n >= 1e9) return `${d(n / 1e9, n >= 1e10 ? 0 : 1)}${fr ? ' Md' : 'B'}`;
+  if (n >= 1e6) return `${d(n / 1e6, n >= 1e7 ? 0 : 1)}${fr ? ' M' : 'M'}`;
+  if (n >= 1e4) return `${Math.round(n / 1e3)}${fr ? ' k' : 'K'}`;
+  return Math.round(n).toLocaleString(fr ? 'fr-FR' : 'en-US');
 }
-export const formatMinuteOfDay = (m) => `${formatHour(Math.floor(m / 60)).replace(' ', `:${String(m % 60).padStart(2, '0')} `)}`;
+export const formatMinuteOfDay = (m, lang = 'en') =>
+  lang === 'fr' ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}` : `${formatHour(Math.floor(m / 60)).replace(' ', `:${String(m % 60).padStart(2, '0')} `)}`;
 const duration = (min) => (min >= 60 ? `${Math.floor(min / 60)} h ${String(Math.round(min % 60)).padStart(2, '0')} min` : `${Math.round(min)} min`);
-const times = (n) => (n >= 10 ? `${Math.round(n)}×` : `${n.toFixed(1)}×`);
+const times = (n, lang = 'en') => (n >= 10 ? `${Math.round(n)}×` : `${lang === 'fr' ? n.toFixed(1).replace('.', ',') : n.toFixed(1)}×`);
 
 /** Fun facts built only from real numbers. Returns [{ key, value, label, caption }]. */
-export function usageFacts(u) {
+export function usageFacts(u, lang = 'en') {
   if (!u) return [];
+  const fr = lang === 'fr';
+  const c = (n) => compact(n, lang);
   const t = u.toolCalls || {};
   const f = [];
   const add = (key, value, label, caption) => f.push({ key, value, label, caption });
   if (u.outputTokens > 0) {
     const words = u.outputTokens * WORDS_PER_TOKEN;
-    add('words', compact(words), 'words written by Claude', `About ${times(words / WAR_AND_PEACE_WORDS)} War and Peace (thinking included).`);
+    const x = times(words / WAR_AND_PEACE_WORDS, lang);
+    add('words', c(words), fr ? 'mots écrits par Claude' : 'words written by Claude', fr ? `Environ ${x} Guerre et Paix (réflexion comprise).` : `About ${x} War and Peace (thinking included).`);
   }
   if (u.totalTokens > 0) {
-    add('tokens', compact(u.totalTokens), 'tokens processed', `Like re-reading the whole Harry Potter saga ${compact(u.totalTokens / HARRY_POTTER_SERIES_TOKENS)} times.`);
+    const x = c(u.totalTokens / HARRY_POTTER_SERIES_TOKENS);
+    add('tokens', c(u.totalTokens), fr ? 'tokens traités' : 'tokens processed', fr ? `Comme relire toute la saga Harry Potter ${x} fois.` : `Like re-reading the whole Harry Potter saga ${x} times.`);
   }
-  if (t.Bash) add('bash', compact(t.Bash), 'shell commands run', 'Your terminal has never been this busy.');
+  if (t.Bash) add('bash', c(t.Bash), fr ? 'commandes shell lancées' : 'shell commands run', fr ? "Ton terminal n'a jamais autant travaillé." : 'Your terminal has never been this busy.');
   const edits = (t.Edit || 0) + (t.MultiEdit || 0) + (t.Write || 0) + (t.NotebookEdit || 0);
-  if (t.Read || edits) add('files', `${compact(t.Read || 0)} / ${compact(edits)}`, 'file reads / edits', 'Reads first, edits later. Mostly.');
-  if (u.subagents) add('subagents', compact(u.subagents), 'subagents hired', 'Claude delegates, like a real manager.');
-  if (u.longestTurnMinutes >= 1) add('longest-turn', duration(u.longestTurnMinutes), 'longest solo run by Claude', 'On a single request, without you.');
-  if (u.claudeHours >= 1) add('claude-hours', `${compact(u.claudeHours)} h`, 'of Claude working on your requests', 'Timed from each prompt to Claude\'s final answer.');
-  add('interruptions', compact(u.interruptions), `time${u.interruptions === 1 ? '' : 's'} you hit Esc on Claude`, u.interruptions === 0 ? 'Saintly patience.' : u.interruptions > 30 ? 'Rude, but efficient.' : 'Only when it mattered.');
-  if (u.compactions) add('compactions', compact(u.compactions), `context overflow${u.compactions === 1 ? '' : 's'}`, 'Conversations so long Claude had to summarize them.');
-  if (u.projects) add('projects', compact(u.projects), `project${u.projects === 1 ? '' : 's'} on the go`, u.projects > 10 ? 'Focus is overrated.' : 'A reasonable portfolio.');
+  if (t.Read || edits) add('files', `${c(t.Read || 0)} / ${c(edits)}`, fr ? 'lectures / modifications de fichiers' : 'file reads / edits', fr ? "On lit d'abord, on modifie ensuite. En général." : 'Reads first, edits later. Mostly.');
+  if (u.subagents) add('subagents', c(u.subagents), fr ? 'sous-agents engagés' : 'subagents hired', fr ? 'Claude délègue, comme un vrai manager.' : 'Claude delegates, like a real manager.');
+  if (u.longestTurnMinutes >= 1) add('longest-turn', duration(u.longestTurnMinutes), fr ? 'plus long travail de Claude en solo' : 'longest solo run by Claude', fr ? 'Sur une seule demande, sans toi.' : 'On a single request, without you.');
+  if (u.claudeHours >= 1) add('claude-hours', `${c(u.claudeHours)} h`, fr ? 'de Claude au travail pour toi' : 'of Claude working on your requests', fr ? 'Du prompt à la réponse finale de Claude, additionné.' : "Timed from each prompt to Claude's final answer.");
+  const one = u.interruptions === 1;
+  add('interruptions', c(u.interruptions),
+    fr ? `fois où tu as arrêté Claude avec Échap` : `time${one ? '' : 's'} you hit Esc on Claude`,
+    u.interruptions === 0 ? (fr ? 'Patience de saint.' : 'Saintly patience.') : u.interruptions > 30 ? (fr ? 'Brutal, mais efficace.' : 'Rude, but efficient.') : (fr ? 'Seulement quand il le fallait.' : 'Only when it mattered.'));
+  if (u.compactions) add('compactions', c(u.compactions), fr ? `débordement${u.compactions === 1 ? '' : 's'} de contexte` : `context overflow${u.compactions === 1 ? '' : 's'}`, fr ? 'Des conversations si longues que Claude a dû les résumer.' : 'Conversations so long Claude had to summarize them.');
+  if (u.projects) add('projects', c(u.projects), fr ? `projet${u.projects === 1 ? '' : 's'} en cours` : `project${u.projects === 1 ? '' : 's'} on the go`, u.projects > 10 ? (fr ? 'La concentration, c\'est surfait.' : 'Focus is overrated.') : (fr ? 'Un portefeuille raisonnable.' : 'A reasonable portfolio.'));
   const web = (t.WebSearch || 0) + (t.WebFetch || 0);
-  if (web) add('web', compact(web), 'web searches and page fetches', 'Claude googles so you don\'t have to.');
-  if (t.mcp) add('mcp', compact(t.mcp), 'MCP tool calls', 'Plugged into everything.');
-  if (u.latestNightMinute != null) add('bedtime', formatMinuteOfDay(u.latestNightMinute), 'latest prompt of the day', 'Good ideas keep their own hours.');
-  if (u.earliestMorningMinute != null) add('early', formatMinuteOfDay(u.earliestMorningMinute), 'earliest start of the day', 'The first prompt of a long day.');
+  if (web) add('web', c(web), fr ? 'recherches et pages web consultées' : 'web searches and page fetches', fr ? 'Claude cherche sur le web pour que tu n\'aies pas à le faire.' : "Claude googles so you don't have to.");
+  if (t.mcp) add('mcp', c(t.mcp), fr ? 'appels d\'outils MCP' : 'MCP tool calls', fr ? 'Branché sur tout.' : 'Plugged into everything.');
+  if (u.latestNightMinute != null) add('bedtime', formatMinuteOfDay(u.latestNightMinute, lang), fr ? 'dernier prompt de la journée' : 'latest prompt of the day', fr ? 'Les bonnes idées ont leurs propres horaires.' : 'Good ideas keep their own hours.');
+  if (u.earliestMorningMinute != null) add('early', formatMinuteOfDay(u.earliestMorningMinute, lang), fr ? 'premier prompt de la journée' : 'earliest start of the day', fr ? "Le premier prompt d'une longue journée." : 'The first prompt of a long day.');
   return f;
 }
 
@@ -186,29 +221,33 @@ export function usageFacts(u) {
  * rarely reaches). Input: { usage, sample, extras: { currentStreak, longestSessionHours, busiestDay } }.
  * Returns [{ key, label, value, hint, color, wow, line }], most spectacular first.
  */
-export function headlines(r, limit = 5) {
+export function headlines(r, limit = 5, lang = 'en') {
   const u = r.usage || {};
   const t = u.toolCalls || {};
   const e = r.extras || {};
   const books = ((u.outputTokens || 0) * WORDS_PER_TOKEN) / WAR_AND_PEACE_WORDS;
   const dur = (min) => (min >= 60 ? `${Math.floor(min / 60)} H ${String(Math.round(min % 60)).padStart(2, '0')}` : `${Math.round(min)} MIN`);
+  const fr = lang === 'fr';
+  const c = (n) => compact(n, lang);
   const busiest = e.busiestDay && e.busiestDay.day
-    ? new Date(`${e.busiestDay.day}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+    ? new Date(`${e.busiestDay.day}T12:00:00Z`).toLocaleDateString(fr ? 'fr-FR' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
     : '';
-  const bookCount = books >= 10 ? Math.round(books) : books.toFixed(1);
+  const bookCount = books >= 10 ? Math.round(books) : fr ? books.toFixed(1).replace('.', ',') : books.toFixed(1);
+  const h = (x) => (fr ? `${c(x)} H` : `${c(x)} H`);
   // label: what it is, in plain words · value: the number with its unit · hint: one line of context
   const list = [
-    { key: 'words', raw: books, ref: 3, label: 'WORDS WRITTEN BY CLAUDE', value: compact((u.outputTokens || 0) * WORDS_PER_TOKEN), hint: `About ${bookCount} copies of War and Peace, thinking included`, color: 'cyan' },
-    { key: 'solo', raw: u.longestTurnMinutes || 0, ref: 90, label: 'LONGEST RUN WITHOUT YOU', value: dur(u.longestTurnMinutes || 0), hint: 'Claude working alone on a single request', color: 'amber' },
-    { key: 'subagents', raw: u.subagents || 0, ref: 40, label: 'SUBAGENTS LAUNCHED', value: compact(u.subagents || 0), hint: 'Helper agents Claude started to split the work', color: 'amber' },
-    { key: 'session', raw: e.longestSessionHours || 0, ref: 3, label: 'LONGEST SESSION', value: `${(e.longestSessionHours || 0).toFixed(1)} H`, hint: 'With Claude, without a 30-minute break', color: 'magenta' },
-    { key: 'streak', raw: e.currentStreak || 0, ref: 10, label: 'DAYS IN A ROW', value: `${e.currentStreak || 0}`, hint: 'Current streak, at least one prompt a day', color: 'amber' },
-    { key: 'binge', raw: (e.busiestDay && e.busiestDay.prompts) || 0, ref: 120, label: 'PROMPTS IN ONE DAY', value: compact((e.busiestDay && e.busiestDay.prompts) || 0), hint: busiest ? `Your busiest day, ${busiest}` : 'Your busiest day', color: 'ph' },
-    { key: 'bash', raw: t.Bash || 0, ref: 2500, label: 'TERMINAL COMMANDS', value: compact(t.Bash || 0), hint: 'Shell commands Claude ran for you', color: 'ph' },
-    { key: 'claude-hours', raw: u.claudeHours || 0, ref: 40, label: 'HOURS OF CLAUDE AT WORK', value: `${compact(u.claudeHours || 0)} H`, hint: "From each prompt to Claude's final answer, added up", color: 'cyan' },
-    { key: 'esc', raw: u.interruptions || 0, ref: 40, label: 'TIMES YOU STOPPED CLAUDE', value: compact(u.interruptions || 0), hint: 'Esc pressed while Claude was working', color: 'magenta' },
-    { key: 'tokens', raw: u.totalTokens || 0, ref: 2e9, label: 'TOKENS PROCESSED', value: compact(u.totalTokens || 0), hint: 'Mostly context Claude re-read from its cache', color: 'cyan' },
+    { key: 'words', raw: books, ref: 3, label: fr ? 'MOTS ÉCRITS PAR CLAUDE' : 'WORDS WRITTEN BY CLAUDE', value: c((u.outputTokens || 0) * WORDS_PER_TOKEN), hint: fr ? `Environ ${bookCount} exemplaires de Guerre et Paix, réflexion comprise` : `About ${bookCount} copies of War and Peace, thinking included`, color: 'cyan' },
+    { key: 'solo', raw: u.longestTurnMinutes || 0, ref: 90, label: fr ? 'PLUS LONG TRAVAIL SANS TOI' : 'LONGEST RUN WITHOUT YOU', value: dur(u.longestTurnMinutes || 0), hint: fr ? 'Claude seul, sur une seule demande' : 'Claude working alone on a single request', color: 'amber' },
+    { key: 'subagents', raw: u.subagents || 0, ref: 40, label: fr ? 'SOUS-AGENTS LANCÉS' : 'SUBAGENTS LAUNCHED', value: c(u.subagents || 0), hint: fr ? 'Des agents assistants lancés par Claude pour répartir le travail' : 'Helper agents Claude started to split the work', color: 'amber' },
+    { key: 'session', raw: e.longestSessionHours || 0, ref: 3, label: fr ? 'PLUS LONGUE SESSION' : 'LONGEST SESSION', value: `${fr ? (e.longestSessionHours || 0).toFixed(1).replace('.', ',') : (e.longestSessionHours || 0).toFixed(1)} H`, hint: fr ? 'Avec Claude, sans pause de 30 minutes' : 'With Claude, without a 30-minute break', color: 'magenta' },
+    { key: 'streak', raw: e.currentStreak || 0, ref: 10, label: fr ? "JOURS D'AFFILÉE" : 'DAYS IN A ROW', value: `${e.currentStreak || 0}`, hint: fr ? 'Série en cours, au moins un prompt par jour' : 'Current streak, at least one prompt a day', color: 'amber' },
+    { key: 'binge', raw: (e.busiestDay && e.busiestDay.prompts) || 0, ref: 120, label: fr ? 'PROMPTS EN UNE JOURNÉE' : 'PROMPTS IN ONE DAY', value: c((e.busiestDay && e.busiestDay.prompts) || 0), hint: busiest ? (fr ? `Ta journée la plus chargée, le ${busiest}` : `Your busiest day, ${busiest}`) : fr ? 'Ta journée la plus chargée' : 'Your busiest day', color: 'ph' },
+    { key: 'bash', raw: t.Bash || 0, ref: 2500, label: fr ? 'COMMANDES TERMINAL' : 'TERMINAL COMMANDS', value: c(t.Bash || 0), hint: fr ? 'Commandes shell lancées par Claude pour toi' : 'Shell commands Claude ran for you', color: 'ph' },
+    { key: 'claude-hours', raw: u.claudeHours || 0, ref: 40, label: fr ? 'HEURES DE CLAUDE AU TRAVAIL' : 'HOURS OF CLAUDE AT WORK', value: h(u.claudeHours || 0), hint: fr ? 'Du prompt à la réponse finale de Claude, additionné' : "From each prompt to Claude's final answer, added up", color: 'cyan' },
+    { key: 'esc', raw: u.interruptions || 0, ref: 40, label: fr ? 'FOIS OÙ TU AS ARRÊTÉ CLAUDE' : 'TIMES YOU STOPPED CLAUDE', value: c(u.interruptions || 0), hint: fr ? 'Échap pressé pendant que Claude travaillait' : 'Esc pressed while Claude was working', color: 'magenta' },
+    { key: 'tokens', raw: u.totalTokens || 0, ref: 2e9, label: fr ? 'TOKENS TRAITÉS' : 'TOKENS PROCESSED', value: c(u.totalTokens || 0), hint: fr ? 'Surtout du contexte relu par Claude depuis son cache' : 'Mostly context Claude re-read from its cache', color: 'cyan' },
   ];
+
 
   return list
     .filter((h) => h.raw > 0)
@@ -262,8 +301,36 @@ export const METRICS = {
 
 export const MODEL_FAMILIES = ['opus', 'fable', 'sonnet', 'haiku', 'other'];
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const WEEKDAYS_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+export const weekdays = (lang = 'en') => (lang === 'fr' ? WEEKDAYS_FR : WEEKDAYS);
 
-export function formatHour(h) {
+export const CRITERIA_FR = {
+  hours: 'Heures actives par jour actif',
+  streak: 'Plus longue série',
+  presence: 'Présence',
+  intensity: 'Intensité',
+  marathon: 'Marathon',
+  delegation: 'Délégation',
+  output: 'Production',
+  limits: "Limites d'usage atteintes",
+  opus: "Part d'Opus",
+};
+export const METRIC_LABELS_FR = {
+  activeHoursPerActiveDay: 'Heures actives / jour actif',
+  activeDaysShare: 'Jours actifs',
+  longestStreakDays: 'Plus longue série',
+  nightPromptShare: 'Prompts 0 h-5 h',
+  promptsPerActiveDay: 'Prompts / jour actif',
+  weekendActivityShare: 'Activité le week-end',
+  limitHitsPer30Days: 'Limites atteintes / 30 j',
+  opusShare: "Part d'Opus",
+  longestSessionHours: 'Plus longue session',
+  subagentsPerActiveDay: 'Sous-agents / jour actif',
+  wordsPerActiveDay: 'Mots de Claude / jour',
+};
+
+export function formatHour(h, lang = 'en') {
+  if (lang === 'fr') return `${h} h`;
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12} ${h < 12 ? 'AM' : 'PM'}`;
 }

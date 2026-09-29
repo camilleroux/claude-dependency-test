@@ -1,48 +1,62 @@
 // GET /case/:slug : the online lab report for a published diagnosis (the patient's case file).
 import {
   ARCHETYPES,
+  ARCHETYPES_FR,
   CRITERIA,
+  CRITERIA_FR,
   METRICS,
+  METRIC_LABELS_FR,
   STAGES,
-  WAR_AND_PEACE_WORDS,
-  WEEKDAYS,
-  WORDS_PER_TOKEN,
+  STAGES_FR,
   compact,
   formatHour,
   formatMinuteOfDay,
   headlines,
   severityFlag,
   usageFacts,
+  weekdays,
 } from '../public/card.js';
 import { doctorNotes, prescription, sideEffects, typingTime } from '../lib/notes.js';
 import { attendance, dayStrip, durationCompare, ecg, medicineBox, pictogram, pillWaffle, radar, radialClock, splitBar, stageScale } from '../lib/infographics.js';
 import { DEMO_REPORT } from '../lib/demo.js';
 import { loadReport } from '../lib/store.js';
-import { badgeBlock, esc, followBlock, footer, head, htmlResponse, installCta, safeJson, shareButtons, shareButtonsHtml } from '../lib/layout.js';
+import { badgeBlock, detectLang, esc, followBlock, footer, head, htmlResponse, installCtaHtml, safeJson, shareButtonsHtml, withLang } from '../lib/layout.js';
 
 export const config = { runtime: 'edge' };
 
-const n = (v) => Math.round(v).toLocaleString('en-US');
-const fmtDay = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-function symptomRows(r) {
+const frNum = (s) => String(s)
+  .replace(/(\d)\.(\d)/g, '$1,$2')
+  .replace(/(\d)%/g, '$1 %')
+  .replace(/(\d)K\b/g, '$1 k')
+  .replace(/\bdays?\b/g, 'jours')
+  .replace(/(\d) d\b/g, '$1 j');
+
+function symptomRows(r, lang = 'en') {
+  const fr = lang === 'fr';
   const rows = [];
   for (const c of r.criteria) {
-    const label = CRITERIA[c.key];
+    const label = (fr ? CRITERIA_FR : CRITERIA)[c.key];
     if (c.earned === null) {
-      rows.push(`<tr class="na"><td>${esc(label)}</td><td colspan="3" class="muted">Not assessed: not measurable from this data. The score was renormalized.</td><td class="num">–/${c.points}</td></tr>`);
+      rows.push(`<tr class="na"><td>${esc(label)}</td><td colspan="3" class="muted">${fr ? 'Non évalué : pas mesurable avec ces données. Le score a été renormalisé.' : 'Not assessed: not measurable from this data. The score was renormalized.'}</td><td class="num">–/${c.points}</td></tr>`);
       continue;
     }
     const ratio = c.points ? c.earned / c.points : 0;
     c.parts.forEach((p, i) => {
       const f = METRICS[p.metric];
+      const mlabel = fr ? METRIC_LABELS_FR[p.metric] || f.label : f.label;
+      const v = fr ? frNum(f.value(p.value)) : f.value(p.value);
+      const ref = fr ? frNum(f.ref(p.from, p.to)) : f.ref(p.from, p.to);
+      const earned = fr ? c.earned.toFixed(1).replace('.', ',') : c.earned.toFixed(1);
       const meter = i === 0
-        ? `<span class="meter" role="img" aria-label="${esc(`${c.earned.toFixed(1)} of ${c.points} points`)}"><span style="width:${Math.round(ratio * 100)}%"></span></span>`
+        ? `<span class="meter" role="img" aria-label="${esc(fr ? `${earned} points sur ${c.points}` : `${earned} of ${c.points} points`)}"><span style="width:${Math.round(ratio * 100)}%"></span></span>`
         : '';
-      rows.push(`<tr${i ? ' class="sub"' : ''}><td>${esc(i ? `↳ ${f.label}` : c.parts.length > 1 ? `${label}: ${f.label.toLowerCase()}` : label)}</td>`
-        + `<td class="num">${esc(f.value(p.value))}</td><td class="num muted">${esc(f.ref(p.from, p.to))}</td>`
-        + `<td>${meter}${i === 0 && severityFlag(ratio) ? ` <span class="flag">${severityFlag(ratio)}</span>` : ''}</td>`
-        + `<td class="num">${i === 0 ? `${c.earned.toFixed(1)}/${c.points}` : ''}</td></tr>`);
+      const flag = severityFlag(ratio);
+      const flagText = fr ? { HIGH: 'ÉLEVÉ', ELEV: 'ACCRU' }[flag] || '' : flag;
+      rows.push(`<tr${i ? ' class="sub"' : ''}><td>${esc(i ? `↳ ${mlabel}` : c.parts.length > 1 ? `${label} : ${mlabel.toLowerCase()}` : label)}</td>`
+        + `<td class="num">${esc(v)}</td><td class="num muted">${esc(ref)}</td>`
+        + `<td>${meter}${i === 0 && flagText ? ` <span class="flag">${flagText}</span>` : ''}</td>`
+        + `<td class="num">${i === 0 ? `${earned}/${c.points}` : ''}</td></tr>`);
     });
   }
   return rows.join('');
@@ -262,8 +276,8 @@ const CSS = `
   @keyframes sign { to { stroke-dashoffset: 0; } }
 `;
 
-function strip(r) {
-  const byKey = Object.fromEntries(usageFacts(r.usage).map((f) => [f.key, f]));
+function strip(r, lang = 'en') {
+  const byKey = Object.fromEntries(usageFacts(r.usage, lang).map((f) => [f.key, f]));
   return ['tokens', 'bash', 'claude-hours', 'web', 'mcp', 'compactions']
     .map((k) => byKey[k])
     .filter(Boolean)
@@ -278,141 +292,154 @@ function feature(value, label, caption, visual) {
 
 const chapter = (no, name, extra = '') => `<div class="chapter-head"><span><b>${no}</b> · ${esc(name)}</span><span>${extra}</span></div>`;
 
-export function renderReportPage(entry, origin) {
+export function renderReportPage(entry, origin, lang = 'en') {
+  const fr = lang === 'fr';
+  const L = (en, frText) => (fr ? frText : en);
   const r = entry.report;
   const u = r.usage;
   const t = u.toolCalls;
-  const stage = STAGES[r.stage];
-  const arch = ARCHETYPES[r.archetype];
+  const stage = (fr ? STAGES_FR : STAGES)[r.stage];
+  const archEn = ARCHETYPES[r.archetype];
+  const arch = fr ? { ...archEn, ...ARCHETYPES_FR[r.archetype] } : archEn;
+  const num = (v) => Math.round(v).toLocaleString(fr ? 'fr-FR' : 'en-US');
+  const day = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString(fr ? 'fr-FR' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   const slug = entry.slug;
   const pageUrl = `${origin}/case/${slug}`;
-  const title = `Claude Dependency: ${r.score}/100, Stage ${r.stage} (${stage.name}) · Claude Dependency Test`;
-  const description = `Diagnosis: ${arch.name}. ${arch.tagline} ${n(r.sample.prompts)} prompts to Claude, ${r.sample.activeHours.toFixed(0)} active hours in ${r.window.days} days. How addicted to Claude are you?`;
+  const alternates = { en: pageUrl, fr: withLang(pageUrl, 'fr') };
+  const canonical = fr ? alternates.fr : pageUrl;
+  const title = fr
+    ? `Dépendance à Claude : ${r.score}/100, stade ${r.stage} (${stage.name.toLowerCase()}) · Claude Dependency Test`
+    : `Claude Dependency: ${r.score}/100, Stage ${r.stage} (${stage.name}) · Claude Dependency Test`;
+  const description = fr
+    ? `Diagnostic : ${arch.name}. ${arch.tagline} ${num(r.sample.prompts)} prompts envoyés à Claude, ${r.sample.activeHours.toFixed(0)} heures actives en ${r.window.days} jours. À quel point es-tu accro à Claude ?`
+    : `Diagnosis: ${arch.name}. ${arch.tagline} ${num(r.sample.prompts)} prompts to Claude, ${r.sample.activeHours.toFixed(0)} active hours in ${r.window.days} days. How addicted to Claude are you?`;
   const badge = `[![Claude Dependency: Stage ${r.stage}](${origin}/badge/${slug})](${pageUrl})`;
-  const data = { slug, url: pageUrl, report: r };
-  const updated = entry.updatedAt ? `Updated ${fmtDay(entry.updatedAt.slice(0, 10))}` : 'Example report';
-  const facts = Object.fromEntries(usageFacts(u).map((f) => [f.key, f]));
+  const data = { slug, url: pageUrl, report: r, lang };
+  const updated = entry.updatedAt ? L(`Updated ${day(entry.updatedAt.slice(0, 10))}`, `Mis à jour le ${day(entry.updatedAt.slice(0, 10))}`) : L('Example report', 'Dossier exemple');
+  const facts = Object.fromEntries(usageFacts(u, lang).map((f) => [f.key, f]));
   const caseNo = slug === 'demo' ? 'DEMO-0001' : `${slug.slice(0, 4)}-${slug.slice(4)}`.toUpperCase();
-  const notes = doctorNotes(r);
-  const log = (k) => (notes[k] ? `<p class="log reveal"><span>▸ NURSE NOTE</span>${esc(notes[k])}</p>` : '');
+  const notes = doctorNotes(r, lang);
+  const log = (k) => (notes[k] ? `<p class="log reveal"><span>▸ ${L('NURSE NOTE', 'NOTE INFIRMIÈRE')}</span>${esc(notes[k])}</p>` : '');
   const typing = typingTime(u.outputTokens);
   const books = typing.books;
   const edits = (t.Edit || 0) + (t.MultiEdit || 0) + (t.Write || 0) + (t.NotebookEdit || 0);
   const topFamily = Object.entries(r.modelMix).sort((a, b) => b[1] - a[1])[0];
   const alarm = arch.alarm || '● STABLE';
-  const heads = headlines(r, 5);
+  const heads = headlines(r, 5, lang);
   const readout = heads.map((h) => `<div><span class="lbl">${esc(h.label)}</span><b style="color:var(--${h.color})">${esc(h.value)}</b><small>${esc(h.hint)}</small></div>`).join('');
+  const bookCount = books >= 10 ? String(Math.round(books)) : fr ? books.toFixed(1).replace('.', ',') : books.toFixed(1);
+  const wd = weekdays(lang);
 
-  return `${head({ title, description, image: `${origin}/og/${slug}`, canonical: pageUrl, extraCss: CSS, indexable: slug === 'demo' })}
-  <header class="monitor" aria-label="Patient monitor">
-    <div class="mon-bar"><span class="rec">Claude Dependency Monitor</span><span>Bed 04 · Case #${esc(caseNo)} · anonymous developer</span><span class="alarm${alarm.startsWith('▲') ? '' : ' ok'}">${esc(alarm)}</span></div>
+  return `${head({ title, description, image: `${origin}/og/${slug}`, canonical, extraCss: CSS, indexable: slug === 'demo', lang, alternates })}
+  <header class="monitor" aria-label="${L('Patient monitor', 'Moniteur du patient')}">
+    <div class="mon-bar"><span class="rec">Claude Dependency Monitor</span><span>${L(`Bed 04 · Case #${esc(caseNo)} · anonymous developer`, `Lit 04 · Dossier nº ${esc(caseNo)} · développeur anonyme`)}</span><span class="alarm${alarm.startsWith('▲') ? '' : ' ok'}">${esc(alarm)}</span></div>
     <div class="mon-grid">
-      <div><div class="lbl"><span>II · Prompts to Claude per day</span><span>${r.window.days} D · ${esc(fmtDay(r.window.startDay))} → ${esc(fmtDay(r.window.endDay))}</span></div>${ecg(r.daily, r.window.startDay)}<p class="ecg-legend">One spike per day. The taller the spike, the more prompts you sent Claude that day. Flat line: a day off.</p></div>
-      <div class="mon-score"><div class="lbl"><span>Claude dependency</span><span>/100</span></div><b data-count="${r.score}" aria-label="${r.score} out of 100">${r.score}</b><div class="stg" style="color:var(--s${r.stage})">Stage ${r.stage} · ${esc(stage.name.toUpperCase())}</div></div>
+      <div><div class="lbl"><span>${L('II · Prompts to Claude per day', 'II · Prompts à Claude par jour')}</span><span>${r.window.days} ${L('D', 'J')} · ${esc(day(r.window.startDay))} → ${esc(day(r.window.endDay))}</span></div>${ecg(r.daily, r.window.startDay, lang)}<p class="ecg-legend">${L('One spike per day. The taller the spike, the more prompts you sent Claude that day. Flat line: a day off.', "Un pic par jour. Plus il est haut, plus tu as envoyé de prompts à Claude ce jour-là. Ligne plate : jour de repos.")}</p></div>
+      <div class="mon-score"><div class="lbl"><span>${L('Claude dependency', 'Dépendance à Claude')}</span><span>/100</span></div><b data-count="${r.score}" aria-label="${r.score} ${L('out of 100', 'sur 100')}">${r.score}</b><div class="stg" style="color:var(--s${r.stage})">${L('Stage', 'Stade')} ${r.stage} · ${esc(stage.name.toUpperCase())}</div></div>
     </div>
-    ${stageScale(r.score, r.stage)}
-    <div class="mon-dx"><div class="lbl amber"><span>DX · ${esc(arch.code)}</span></div><h1>${esc(arch.name)}</h1><p>${esc(arch.tagline)}</p></div>
-    <div class="mon-read-title">Headlines · the most spectacular numbers in this chart</div>
+    ${stageScale(r.score, r.stage, lang)}
+    <div class="mon-dx"><div class="lbl amber"><span>DX · ${esc(arch.code)}</span></div><h1>${esc(arch.name)}</h1><p>${esc(arch.tagline)}${fr ? ` <span class="muted small">(${esc(archEn.name)})</span>` : ''}</p></div>
+    <div class="mon-read-title">${L('Headlines · the most spectacular numbers in this chart', 'À la une · les chiffres les plus spectaculaires du dossier')}</div>
     <div class="mon-read">${readout}</div>
   </header>
-  <div class="hero-actions">${shareButtons}<a class="scroll-hint" href="#attendance">▼ FULL CHART</a></div>
+  <div class="hero-actions">${shareButtonsHtml('', lang)}<a class="scroll-hint" href="#attendance">▼ ${L('FULL CHART', 'DOSSIER COMPLET')}</a></div>
 
   <main class="column">
     <section class="chapter" id="attendance">
-      ${chapter('01', 'Attendance', `${r.window.days}-day observation`)}
-      <h2>${r.sample.activeDays === r.window.days ? 'Present <em>every single day</em>.' : `Present <em>${r.sample.activeDays} days</em> out of ${r.window.days}.`}</h2>
+      ${chapter('01', L('Attendance', 'Assiduité'), L(`${r.window.days}-day observation`, `observation sur ${r.window.days} jours`))}
+      <h2>${r.sample.activeDays === r.window.days ? L('Present <em>every single day</em>.', 'Présent <em>tous les jours</em>.') : L(`Present <em>${r.sample.activeDays} days</em> out of ${r.window.days}.`, `Présent <em>${r.sample.activeDays} jours</em> sur ${r.window.days}.`)}</h2>
       ${log('attendance')}
       <div class="trio reveal">
-        <div><b>${n(r.sample.prompts)}</b><span>prompts to Claude, ${n(r.sample.prompts / Math.max(1, r.sample.activeDays))} per active day</span></div>
-        <div><b>${r.sample.activeHours.toFixed(0)} H</b><span>of active time in ${n(r.sample.sessions)} sessions</span></div>
-        <div><b>${esc(fmtDay(r.extras.busiestDay.day)).toUpperCase()}</b><span>busiest day, ${n(r.extras.busiestDay.prompts)} prompts</span></div>
+        <div><b>${num(r.sample.prompts)}</b><span>${L(`prompts to Claude, ${num(r.sample.prompts / Math.max(1, r.sample.activeDays))} per active day`, `prompts envoyés à Claude, ${num(r.sample.prompts / Math.max(1, r.sample.activeDays))} par jour actif`)}</span></div>
+        <div><b>${r.sample.activeHours.toFixed(0)} H</b><span>${L(`of active time in ${num(r.sample.sessions)} sessions`, `de temps actif en ${num(r.sample.sessions)} sessions`)}</span></div>
+        <div><b>${esc(day(r.extras.busiestDay.day)).toUpperCase()}</b><span>${L(`busiest day, ${num(r.extras.busiestDay.prompts)} prompts`, `journée la plus chargée, ${num(r.extras.busiestDay.prompts)} prompts`)}</span></div>
       </div>
-      <div class="reveal">${attendance(r)}</div>
+      <div class="reveal">${attendance(r, lang)}</div>
     </section>
 
     <section class="chapter">
-      ${chapter('02', 'Circadian rhythm', `peak ${esc(formatHour(r.extras.peakHour))}`)}
-      <h2>${u.earliestMorningMinute != null && u.latestNightMinute != null ? `On duty from <em>${esc(formatMinuteOfDay(u.earliestMorningMinute))}</em> to <em>${esc(formatMinuteOfDay(u.latestNightMinute))}</em>.` : `Peak hour: <em>${esc(formatHour(r.extras.peakHour))}</em>.`}</h2>
+      ${chapter('02', L('Circadian rhythm', 'Rythme circadien'), `${L('peak', 'pic')} ${esc(formatHour(r.extras.peakHour, lang))}`)}
+      <h2>${u.earliestMorningMinute != null && u.latestNightMinute != null ? L(`On duty from <em>${esc(formatMinuteOfDay(u.earliestMorningMinute))}</em> to <em>${esc(formatMinuteOfDay(u.latestNightMinute))}</em>.`, `De garde de <em>${esc(formatMinuteOfDay(u.earliestMorningMinute, lang))}</em> à <em>${esc(formatMinuteOfDay(u.latestNightMinute, lang))}</em>.`) : L(`Peak hour: <em>${esc(formatHour(r.extras.peakHour))}</em>.`, `Heure de pointe : <em>${esc(formatHour(r.extras.peakHour, lang))}</em>.`)}</h2>
       ${log('clock')}
-      <div class="panel reveal">${radialClock(r.hours, r.extras.peakHour)}</div>
-      <p class="block-title">Your Claude day</p>
-      <p class="block-sub">Earliest first prompt and latest last prompt over the whole period.</p>
-      ${dayStrip(u.earliestMorningMinute, u.latestNightMinute)}
-      <p class="block-title">Weekly pattern</p>
-      <p class="block-sub">Prompts by day of week. Weekends highlighted. Busiest: ${esc(WEEKDAYS[r.extras.peakWeekday])}.</p>
+      <div class="panel reveal">${radialClock(r.hours, r.extras.peakHour, lang)}</div>
+      <p class="block-title">${L('Your Claude day', 'Ta journée avec Claude')}</p>
+      <p class="block-sub">${L('Earliest first prompt and latest last prompt over the whole period.', 'Le premier prompt le plus tôt et le dernier prompt le plus tard, sur toute la période.')}</p>
+      ${dayStrip(u.earliestMorningMinute, u.latestNightMinute, lang)}
+      <p class="block-title">${L('Weekly pattern', 'Semaine type')}</p>
+      <p class="block-sub">${L(`Prompts by day of week. Weekends highlighted. Busiest: ${esc(wd[r.extras.peakWeekday])}.`, `Prompts par jour de la semaine. Week-ends en évidence. Jour le plus chargé : ${esc(wd[r.extras.peakWeekday])}.`)}</p>
       <div class="panel"><div class="chart" id="chart-weekdays"></div></div>
     </section>
 
     <section class="chapter">
-      ${chapter('03', 'Side effects', 'counted, not estimated')}
-      <h2>${u.outputTokens > 0 ? `Claude wrote you <em>${esc(compact(typing.words))} words</em>.` : 'Side effects.'}</h2>
+      ${chapter('03', L('Side effects', 'Effets secondaires'), L('counted, not estimated', 'comptés, pas estimés'))}
+      <h2>${u.outputTokens > 0 ? L(`Claude wrote you <em>${esc(compact(typing.words))} words</em>.`, `Claude t'a écrit <em>${esc(compact(typing.words, lang))} de mots</em>.`) : L('Side effects.', 'Effets secondaires.')}</h2>
       ${log('effects')}
-      ${feature(`${books >= 10 ? Math.round(books) : books.toFixed(1)}×`, 'War and Peace, written by Claude', facts.words ? `One book = one War and Peace (587,287 words). Typing all that at 40 words a minute, nonstop: ${n(typing.days)} days. Thinking included.` : '', pictogram(books, 'book', { max: 60, one: 'book', many: 'copies of War and Peace' }))}
-      <div class="strip reveal">${strip(r)}</div>
-      ${feature(n(t.Read || 0) + ' / ' + n(edits), 'File reads / edits', 'Reads first, edits later. Mostly.', splitBar(t.Read || 0, edits, 'reads', 'edits'))}
-      <p class="block-title">Procedures performed</p>
-      <p class="block-sub">What Claude reached for most, in tool calls.</p>
+      ${feature(`${bookCount}×`, L('War and Peace, written by Claude', 'Guerre et Paix, écrits par Claude'), facts.words ? L(`One book = one War and Peace (587,287 words). Typing all that at 40 words a minute, nonstop: ${num(typing.days)} days. Thinking included.`, `Un livre = un Guerre et Paix (587 287 mots). Taper tout ça à 40 mots par minute, sans pause : ${num(typing.days)} jours. Réflexion comprise.`) : '', pictogram(books, 'book', { max: 60, one: L('book', 'livre'), many: L('copies of War and Peace', 'exemplaires de Guerre et Paix'), lang }))}
+      <div class="strip reveal">${strip(r, lang)}</div>
+      ${feature(num(t.Read || 0) + ' / ' + num(edits), L('File reads / edits', 'Lectures / modifications de fichiers'), L('Reads first, edits later. Mostly.', "On lit d'abord, on modifie ensuite. En général."), splitBar(t.Read || 0, edits, L('reads', 'lectures'), L('edits', 'modifications'), lang))}
+      <p class="block-title">${L('Procedures performed', 'Actes pratiqués')}</p>
+      <p class="block-sub">${L('What Claude reached for most, in tool calls.', "Les outils que Claude a le plus utilisés, en nombre d'appels.")}</p>
       <div class="panel"><div class="chart" id="chart-tools"></div></div>
-      ${feature(n(u.subagents), 'Subagents hired', 'Claude delegates, like a real manager.', pictogram(u.subagents, 'person', { one: 'person', many: 'subagents' }))}
-      ${facts['longest-turn'] ? feature(facts['longest-turn'].value, 'Longest solo run by Claude', 'On a single request, unattended. For scale:', durationCompare(u.longestTurnMinutes)) : ''}
-      ${feature(n(u.interruptions), facts.interruptions.label, facts.interruptions.caption, pictogram(u.interruptions, 'key', { one: 'key', many: 'interruptions' }))}
-      ${facts.projects ? feature(n(u.projects), facts.projects.label, facts.projects.caption, pictogram(u.projects, 'folder', { one: 'folder', many: 'projects' })) : ''}
+      ${feature(num(u.subagents), L('Subagents hired', 'Sous-agents engagés'), L('Claude delegates, like a real manager.', 'Claude délègue, comme un vrai manager.'), pictogram(u.subagents, 'person', { one: L('person', 'personnage'), many: L('subagents', 'sous-agents'), lang }))}
+      ${facts['longest-turn'] ? feature(facts['longest-turn'].value, L('Longest solo run by Claude', 'Plus long travail de Claude en solo'), L('On a single request, unattended. For scale:', 'Sur une seule demande, sans surveillance. Pour comparer :'), durationCompare(u.longestTurnMinutes, lang)) : ''}
+      ${feature(num(u.interruptions), facts.interruptions.label, facts.interruptions.caption, pictogram(u.interruptions, 'key', { one: L('key', 'touche'), many: L('interruptions', 'interruptions'), lang }))}
+      ${facts.projects ? feature(num(u.projects), facts.projects.label, facts.projects.caption, pictogram(u.projects, 'folder', { one: L('folder', 'dossier'), many: L('projects', 'projets'), lang })) : ''}
     </section>
 
     <section class="chapter">
-      ${chapter('04', 'Medication', 'Rx only')}
-      <h2>Prescribed: <em>Claudoxine ${r.score} mg</em>.</h2>
+      ${chapter('04', L('Medication', 'Traitement'), L('Rx only', 'Sur ordonnance'))}
+      <h2>${L(`Prescribed: <em>Claudoxine ${r.score} mg</em>.`, `Prescription : <em>Claudoxine ${r.score} mg</em>.`)}</h2>
       ${log('medication')}
       <div class="medication reveal">
-        ${medicineBox(r)}
+        ${medicineBox(r, lang)}
         <div class="leaflet">
-          <p class="leaflet-head"><span>Claudoxine®</span><span>Package leaflet</span></p>
-          <h3>Possible side effects</h3>
-          <p class="leaflet-sub">Observed in this patient. Each one is backed by a number.</p>
-          <ul>${sideEffects(r).map((x) => `<li><span>${esc(x.text)}</span><small>${esc(x.evidence)}</small></li>`).join('')}</ul>
-          <p class="leaflet-foot">If side effects persist, keep shipping.</p>
+          <p class="leaflet-head"><span>Claudoxine®</span><span>${L('Package leaflet', 'Notice')}</span></p>
+          <h3>${L('Possible side effects', 'Effets indésirables possibles')}</h3>
+          <p class="leaflet-sub">${L('Observed in this patient. Each one is backed by a number.', 'Observés chez ce patient. Chacun est justifié par un chiffre.')}</p>
+          <ul>${sideEffects(r, lang).map((x) => `<li><span>${esc(x.text)}</span><small>${esc(x.evidence)}</small></li>`).join('')}</ul>
+          <p class="leaflet-foot">${L('If side effects persist, keep shipping.', 'Si les effets persistent, continue de livrer.')}</p>
         </div>
       </div>
-      <p class="block-title">Active ingredients</p>
-      <p class="block-sub">${topFamily ? `${esc(topFamily[0][0].toUpperCase() + topFamily[0].slice(1))}, ${Math.round(topFamily[1] * 100)}% of the time. ` : ''}100 pills, one per 1% of Claude's responses, colored by model.</p>
-      <div class="panel reveal">${pillWaffle(r.modelMix)}</div>
+      <p class="block-title">${L('Active ingredients', 'Principes actifs')}</p>
+      <p class="block-sub">${topFamily ? L(`${esc(topFamily[0][0].toUpperCase() + topFamily[0].slice(1))}, ${Math.round(topFamily[1] * 100)}% of the time. `, `${esc(topFamily[0][0].toUpperCase() + topFamily[0].slice(1))}, ${Math.round(topFamily[1] * 100)} % du temps. `) : ''}${L("100 pills, one per 1% of Claude's responses, colored by model.", '100 pilules, une pour 1 % des réponses de Claude, colorées selon le modèle.')}</p>
+      <div class="panel reveal">${pillWaffle(r.modelMix, lang)}</div>
     </section>
 
     <section class="chapter">
-      ${chapter('05', 'Symptom profile', `${r.score}/100`)}
-      <h2>Where the <em>${r.score} points</em> came from.</h2>
+      ${chapter('05', L('Symptom profile', 'Profil des symptômes'), `${r.score}/100`)}
+      <h2>${L(`Where the <em>${r.score} points</em> came from.`, `D'où viennent les <em>${r.score} points</em>.`)}</h2>
       ${log('profile')}
-      <p class="intro">Share of each symptom's points earned. Each one is scored linearly between two reference values. <a href="/#methodology">Full rules</a></p>
-      <div class="panel reveal">${radar(r.criteria)}</div>
+      <p class="intro">${L("Share of each symptom's points earned. Each one is scored linearly between two reference values.", 'Part des points obtenus pour chaque symptôme. Chacun est noté de façon linéaire entre deux valeurs de référence.')} <a href="${fr ? '/fr#methodology' : '/#methodology'}">${L('Full rules', 'Règles complètes')}</a></p>
+      <div class="panel reveal">${radar(r.criteria, lang)}</div>
       <div class="table-wrap" style="margin-top:14px"><table>
-        <thead><tr><th>Symptom</th><th>Result</th><th>Reference</th><th>Severity</th><th>Points</th></tr></thead>
-        <tbody>${symptomRows(r)}</tbody>
+        <thead><tr><th>${L('Symptom', 'Symptôme')}</th><th>${L('Result', 'Résultat')}</th><th>${L('Reference', 'Référence')}</th><th>${L('Severity', 'Gravité')}</th><th>Points</th></tr></thead>
+        <tbody>${symptomRows(r, lang)}</tbody>
       </table></div>
     </section>
 
     <section class="chapter">
-      ${chapter('06', 'Prognosis', esc(updated))}
+      ${chapter('06', L('Prognosis', 'Pronostic'), esc(updated))}
       <h2>${esc(stage.prognosis)}</h2>
       <div class="rx reveal">
-        <div class="rx-head"><span class="rx-mark">℞</span><div><b>Claude Dependency Clinic</b><small>Patient: anonymous developer · Case #${esc(caseNo)} · ${esc(fmtDay(r.window.endDay))}</small></div></div>
-        <ol>${prescription(r).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>
-        <div class="rx-foot"><svg class="signature" viewBox="0 0 220 60" aria-hidden="true"><path d="M6 44c14-30 26-36 30-22s-10 30-4 30 18-34 30-36 4 26 12 26 14-22 22-22 2 20 10 20 16-26 26-26-2 24 8 24 20-14 30-16 12 6 30 2"/></svg><span class="stamp" aria-hidden="true">Approved</span></div>
+        <div class="rx-head"><span class="rx-mark">℞</span><div><b>${L('Claude Dependency Clinic', 'Clinique de la dépendance à Claude')}</b><small>${L(`Patient: anonymous developer · Case #${esc(caseNo)} · ${esc(day(r.window.endDay))}`, `Patient : développeur anonyme · Dossier nº ${esc(caseNo)} · ${esc(day(r.window.endDay))}`)}</small></div></div>
+        <ol>${prescription(r, lang).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>
+        <div class="rx-foot"><svg class="signature" viewBox="0 0 220 60" aria-hidden="true"><path d="M6 44c14-30 26-36 30-22s-10 30-4 30 18-34 30-36 4 26 12 26 14-22 22-22 2 20 10 20 16-26 26-26-2 24 8 24 20-14 30-16 12 6 30 2"/></svg><span class="stamp" aria-hidden="true">${L('Approved', 'Validé')}</span></div>
       </div>
-      <p class="muted small" style="margin-top:22px">Computed on the patient's machine from Claude Code usage patterns. This page holds aggregate numbers only: no prompts, code, file paths or project names.</p>
+      <p class="muted small" style="margin-top:22px">${L("Computed on the patient's machine from Claude Code usage patterns. This page holds aggregate numbers only: no prompts, code, file paths or project names.", "Calculé sur la machine du patient à partir de son usage de Claude Code. Cette page ne contient que des chiffres agrégés : aucun prompt, aucun code, aucun chemin de fichier ni nom de projet.")}</p>
     </section>
 
     <section class="chapter share-end">
-      ${chapter('07', 'Discharge', 'share the chart')}
-      <h2>Stage ${r.stage}. <em>${esc(stage.name)}.</em> Tell your friends.</h2>
+      ${chapter('07', L('Discharge', 'Sortie'), L('share the chart', 'partage le dossier'))}
+      <h2>${L(`Stage ${r.stage}. <em>${esc(stage.name)}.</em> Tell your friends.`, `Stade ${r.stage}. <em>${esc(stage.name)}.</em> Dis-le à tes amis.`)}</h2>
       <canvas id="card" class="card-canvas" width="1200" height="630" role="img" aria-label="${esc(title)}"></canvas>
-      ${shareButtonsHtml('-2')}
-      ${followBlock()}
+      ${shareButtonsHtml('-2', lang)}
+      ${followBlock(lang)}
     </section>
 
-    ${installCta}
-    ${badgeBlock(badge)}
+    ${installCtaHtml(lang)}
+    ${badgeBlock(badge, lang)}
   </main>
-  ${footer(' · Published this page? Delete it anytime with <code>/claude-dependency-test:diagnose --unpublish</code>.')}
+  ${footer(L(' · Published this page? Delete it anytime with <code>/claude-dependency-test:diagnose --unpublish</code>.', ' · Tu as publié cette page ? Supprime-la à tout moment avec <code>/claude-dependency-test:diagnose --unpublish</code>.'), lang)}
 <script type="application/json" id="report-data">${safeJson(data)}</script>
 <script type="module" src="/report-page.js"></script>
 </body>
@@ -421,16 +448,22 @@ export function renderReportPage(entry, origin) {
 
 export default async function handler(request) {
   const url = new URL(request.url);
+  const lang = detectLang(request);
+  const explicit = url.searchParams.has('lang');
   const slug = url.searchParams.get('slug') || url.pathname.split('/case/')[1] || '';
   const entry = slug === 'demo' ? { slug: 'demo', report: DEMO_REPORT } : await loadReport(slug);
   if (!entry) {
-    return htmlResponse(`${head({ title: 'Report not found · Claude Dependency Test', description: 'This lab report was deleted or has expired.', image: `${url.origin}/og`, canonical: `${url.origin}/` })}
-  <header class="result"><p class="kicker">404</p><h1>This lab report has left the building.</h1>
-  <p class="lead">It was deleted by its patient, or it expired after a year without a checkup.</p></header>
-  ${installCta}${footer()}
+    const fr = lang === 'fr';
+    return htmlResponse(`${head({ title: fr ? 'Dossier introuvable · Claude Dependency Test' : 'Report not found · Claude Dependency Test', description: fr ? 'Ce dossier a été supprimé ou a expiré.' : 'This lab report was deleted or has expired.', image: `${url.origin}/og`, canonical: `${url.origin}/`, lang })}
+  <header class="result"><p class="kicker">404</p><h1>${fr ? 'Ce dossier a quitté l\'hôpital.' : 'This lab report has left the building.'}</h1>
+  <p class="lead">${fr ? 'Il a été supprimé par son patient, ou il a expiré après un an sans visite de contrôle.' : 'It was deleted by its patient, or it expired after a year without a checkup.'}</p></header>
+  ${installCtaHtml(lang)}${footer('', lang)}
 <script type="module" src="/report-page.js"></script>
 </body></html>`, { status: 404, cache: 'no-store' });
   }
-  // Short CDN cache: an unpublished or updated case file must disappear quickly everywhere.
-  return htmlResponse(renderReportPage(entry, url.origin), { cache: slug === 'demo' ? 'public, max-age=300, s-maxage=3600' : 'public, max-age=60, s-maxage=60' });
+  // Short cache: an unpublished or updated case file must disappear quickly everywhere. Pages whose
+  // language comes from Accept-Language stay out of the shared CDN cache (private) and say so (Vary).
+  const ttl = slug === 'demo' ? 300 : 60;
+  const cache = explicit ? `public, max-age=${ttl}, s-maxage=${ttl}` : `private, max-age=${ttl}`;
+  return htmlResponse(renderReportPage(entry, url.origin, lang), { cache, vary: explicit ? null : 'Accept-Language' });
 }
