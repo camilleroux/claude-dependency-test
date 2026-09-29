@@ -101,3 +101,39 @@ export function prescription(r, lang = 'en') {
   lines.push(fr ? 'Renouvelable à volonté. Effets secondaires : peut provoquer des mises en production.' : 'Refills: unlimited. Side effects: may include shipping.');
   return lines;
 }
+
+/**
+ * French pages only: a recommended "treatment", i.e. a Human Coders training matched to the
+ * diagnosis. Low stages get the introduction, everyone else the advanced course (subagents, MCP).
+ * Returns null in English: the trainings are taught in French.
+ */
+const TRAINING_URL = (slug, placement) =>
+  `https://www.humancoders.com/formations/${slug}?utm_source=claude-dependency-test&utm_medium=referral&utm_campaign=${placement}`;
+
+const TREATMENT_FR = {
+  'middle-manager': 'Pour diriger tes sous-agents comme une vraie équipe, sans réunion : orchestration, MCP, SDK.',
+  'session-overextension': 'Pour déléguer les longues tâches à des sous-agents, et finir tes sessions avant la batterie.',
+  'hypergraphia': 'Pour canaliser ces millions de mots : prompts mieux découpés, sous-agents, workflows industrialisés.',
+  'streak-dependency': 'Pour que chaque jour avec Claude compte : customisation, plugins et automatisation des tâches récurrentes.',
+  'deep-focus': 'Pour transformer ces heures de travail en workflows automatisés : slash commandes, plugins, MCP.',
+  'prompt-hyperactivity': 'Pour obtenir plus avec moins de prompts : décomposition des tâches, commandes et sous-agents.',
+  'limit-collision': "Pour arrêter de heurter les limites : gestion du contexte, délégation et workflows plus économes.",
+  'opus-affluenza': 'Pour tirer le meilleur de chaque modèle, et garder Opus pour ce qui le mérite.',
+};
+
+export function treatment(r, lang = 'en', placement = 'prescription') {
+  if (lang !== 'fr') return null;
+  const beginner = r.stage <= 2 || r.archetype === 'recreational-use';
+  if (beginner) {
+    return {
+      name: 'Formation Claude Code',
+      text: 'Pour passer au stade supérieur : configuration, ingénierie de contexte, commandes et skills. Deux jours.',
+      url: TRAINING_URL('claude-code', placement),
+    };
+  }
+  return {
+    name: 'Formation Claude Code avancé',
+    text: `${TREATMENT_FR[r.archetype] || 'Pour passer à la vitesse supérieure : plugins, MCP, sous-agents et SDK.'} Deux jours.`,
+    url: TRAINING_URL('claude-code-avance', placement),
+  };
+}

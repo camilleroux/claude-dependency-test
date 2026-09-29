@@ -40,3 +40,11 @@ test('/r and the share text follow the language', async () => {
   assert.match(shareText(card, 'fr'), /Et toi, à quel point es-tu accro à Claude \?/);
   assert.match(shareText(card), /How addicted to Claude are you\?/);
 });
+
+test('French case pages recommend a Human Coders training matched to the diagnosis, English ones do not', async () => {
+  const fr = await (await handleCase(req('https://x.test/case/demo?lang=fr'))).text();
+  assert.match(fr, /Traitement recommandé/);
+  assert.match(fr, /humancoders\.com\/formations\/claude-code-avance\?utm_source=claude-dependency-test&amp;utm_medium=referral&amp;utm_campaign=prescription/);
+  const en = await (await handleCase(req('https://x.test/case/demo?lang=en'))).text();
+  assert.doesNotMatch(en, /humancoders/);
+});
