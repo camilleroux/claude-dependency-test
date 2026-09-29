@@ -107,9 +107,10 @@ export const installCtaHtml = (lang = 'en') => `
       <h2>${L(lang, "Think you're less addicted? Prove it.", 'Tu te crois moins accro ? Prouve-le.')}</h2>
       <p class="muted">${L(lang, 'Three commands in Claude Code. The score is computed on your machine. Your prompts, code and file names never leave it.', 'Trois commandes dans Claude Code. Le score est calculé sur ta machine. Tes prompts, ton code et tes noms de fichiers ne la quittent jamais.')}</p>
     </div>
-    <div class="install">${INSTALL_COMMANDS.map(
+    <div><div class="install">${INSTALL_COMMANDS.map(
       (cmd, i) => `<div class="cmd"><span class="n">${i + 1}</span><code>${esc(cmd)}</code><button class="btn" type="button" data-copy="${esc(cmd)}">${L(lang, 'Copy', 'Copier')}</button></div>`,
     ).join('')}</div>
+      <p class="muted small" style="margin-top:10px">${L(lang, 'No plugin? Run <code>npx claude-dependency-test</code> in any terminal.', 'Pas envie du plugin ? Lance <code>npx claude-dependency-test</code> dans n\'importe quel terminal.')}</p></div>
   </section>`;
 export const installCta = installCtaHtml();
 

@@ -223,3 +223,16 @@ test('streaming: handles a transcript of several tens of MB', async () => {
   assert.equal(c.activity.length, N);
   assert.equal(c.modelEvents.length, N / 2);
 });
+
+test('runs when launched through a symlink, like npx and global installs do', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cdt-bin-'));
+  const link = path.join(dir, 'claude-dependency-test');
+  fs.symlinkSync(path.join(HERE, '..', 'scripts', 'diagnose.mjs'), link);
+  const res = spawnSync(process.execPath, [link, '--json', '--no-publish', '--no-html', '--no-open', '--tz', 'UTC', '--now', '2026-09-28T12:00:00Z'], {
+    env: { ...process.env, CLAUDE_CONFIG_DIR: FIX },
+    encoding: 'utf8',
+  });
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(JSON.parse(res.stdout).score, 13);
+});

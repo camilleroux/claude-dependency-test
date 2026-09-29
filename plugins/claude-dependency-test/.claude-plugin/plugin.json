@@ -1,7 +1,7 @@
 {
   "name": "claude-dependency-test",
   "displayName": "Claude Dependency Test",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "How addicted to Claude are you? Computes a 0-100 dependency score from your local Claude Code transcripts and generates a shareable card. Offline, aggregates only.",
   "author": {
     "name": "Camille Roux",
