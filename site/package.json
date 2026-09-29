@@ -9,6 +9,7 @@
     "deploy": "vercel deploy --prod"
   },
   "dependencies": {
-    "@vercel/og": "^0.6.8"
+    "@vercel/og": "^0.6.8",
+    "@vercel/speed-insights": "^2.0.0"
   }
 }

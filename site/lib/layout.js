@@ -40,6 +40,7 @@ export function head({ title, description, image, canonical, extraCss = '', inde
 <link rel="stylesheet" href="/site.css">
 <script src="/va.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
+<script type="module" src="/speed-insights.js"></script>
 ${extraCss ? `<style>${extraCss}</style>` : ''}
 </head>
 <body>
