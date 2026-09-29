@@ -17,7 +17,7 @@ import {
   usageFacts,
   weekdays,
 } from '../public/card.js';
-import { doctorNotes, prescription, sideEffects, typingTime } from '../lib/notes.js';
+import { doctorNotes, prescription, sideEffects, treatment, typingTime } from '../lib/notes.js';
 import { attendance, dayStrip, durationCompare, ecg, medicineBox, pictogram, pillWaffle, radar, radialClock, splitBar, stageScale } from '../lib/infographics.js';
 import { DEMO_REPORT } from '../lib/demo.js';
 import { getStore, loadReport } from '../lib/store.js';
@@ -254,6 +254,12 @@ const CSS = `
   .rx ol { font: 30px/1.1 var(--hand); color: #1f3fb0; padding-left: 26px; margin: 14px 0 8px; }
   .rx ol li { margin-bottom: 6px; }
   .rx-foot { display: flex; justify-content: space-between; align-items: center; }
+  .rx-treatment { border: 1.5px dashed #1f3fb0; border-radius: 3px; padding: 10px 12px; margin: 4px 0 12px; }
+  .rx-label { display: block; font: 700 12px/1 'Archivo Narrow'; letter-spacing: .14em; text-transform: uppercase; color: #D8432F; margin-bottom: 6px; }
+  .rx-treatment a { font: 700 19px/1.2 'Archivo Narrow'; color: #1b1b1b; text-decoration: underline; text-underline-offset: 3px; }
+  .rx-treatment a:hover { color: #1f3fb0; }
+  .rx-treatment p { margin: 6px 0 4px; font-size: 14px; line-height: 1.4; color: #333; }
+  .rx-treatment small { font-size: 11px; color: #777; letter-spacing: .04em; }
   .signature { width: 190px; height: 52px; fill: none; stroke: #1f3fb0; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .stamp { display: inline-block; border: 3px solid #C8372D; color: #C8372D; font: 700 18px/1 'Archivo Narrow'; letter-spacing: .14em; text-transform: uppercase; padding: 6px 10px; rotate: -9deg; opacity: .85; }
 
@@ -335,6 +341,7 @@ export function renderReportPage(entry, origin, lang = 'en') {
   const readout = heads.map((h) => `<div><span class="lbl">${esc(h.label)}</span><b style="color:var(--${h.color})">${esc(h.value)}</b><small>${esc(h.hint)}</small></div>`).join('');
   const bookCount = books >= 10 ? String(Math.round(books)) : fr ? books.toFixed(1).replace('.', ',') : books.toFixed(1);
   const wd = weekdays(lang);
+  const rx = treatment(r, lang);
 
   return `${head({ title, description, image: `${origin}/og/${slug}`, canonical, extraCss: CSS, indexable: slug === 'demo', lang, alternates })}
   <header class="monitor" aria-label="${L('Patient monitor', 'Moniteur du patient')}">
@@ -429,6 +436,7 @@ export function renderReportPage(entry, origin, lang = 'en') {
       <div class="rx reveal">
         <div class="rx-head"><span class="rx-mark">℞</span><div><b>${L('Claude Dependency Clinic', 'Clinique de la dépendance à Claude')}</b><small>${L(`Patient: anonymous developer · Case #${esc(caseNo)} · ${esc(day(r.window.endDay))}`, `Patient : développeur anonyme · Dossier nº ${esc(caseNo)} · ${esc(day(r.window.endDay))}`)}</small></div></div>
         <ol>${prescription(r, lang).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>
+        ${rx ? `<div class="rx-treatment"><span class="rx-label">Traitement recommandé</span><a href="${esc(rx.url)}" target="_blank" rel="noopener">${esc(rx.name)} →</a><p>${esc(rx.text)}</p><small>Proposé par Human Coders</small></div>` : ''}
         <div class="rx-foot"><svg class="signature" viewBox="0 0 220 60" aria-hidden="true"><path d="M6 44c14-30 26-36 30-22s-10 30-4 30 18-34 30-36 4 26 12 26 14-22 22-22 2 20 10 20 16-26 26-26-2 24 8 24 20-14 30-16 12 6 30 2"/></svg><span class="stamp" aria-hidden="true">${L('Approved', 'Validé')}</span></div>
       </div>
       <p class="muted small" style="margin-top:22px">${L("Computed on the patient's machine from Claude Code usage patterns. This page holds aggregate numbers only: no prompts, code, file paths or project names.", "Calculé sur la machine du patient à partir de son usage de Claude Code. Cette page ne contient que des chiffres agrégés : aucun prompt, aucun code, aucun chemin de fichier ni nom de projet.")}</p>
