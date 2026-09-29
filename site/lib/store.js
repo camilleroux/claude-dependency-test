@@ -30,11 +30,38 @@ function upstash(url, token) {
       if (n === 1) await call(['EXPIRE', key, String(ttl)]);
       return n;
     },
+    // Sorted sets, for the score distribution. Bounds use Redis syntax: -inf, +inf, (exclusive.
+    async zadd(key, score, member) {
+      await call(['ZADD', key, String(score), member]);
+    },
+    async zrem(key, member) {
+      await call(['ZREM', key, member]);
+    },
+    async zcard(key) {
+      return Number(await call(['ZCARD', key]));
+    },
+    async zcount(key, min, max) {
+      return Number(await call(['ZCOUNT', key, min, max]));
+    },
+    async zrangebyscore(key, min, max) {
+      return call(['ZRANGEBYSCORE', key, min, max]);
+    },
   };
+}
+
+/** Redis score bound ("-inf", "+inf", "12", "(12") -> test function. */
+function bound(spec, isMin) {
+  if (spec === '-inf') return () => true;
+  if (spec === '+inf') return () => true;
+  const exclusive = String(spec).startsWith('(');
+  const v = Number(exclusive ? spec.slice(1) : spec);
+  if (isMin) return exclusive ? (x) => x > v : (x) => x >= v;
+  return exclusive ? (x) => x < v : (x) => x <= v;
 }
 
 export function memoryStore() {
   const data = new Map();
+  const zsets = new Map();
   const alive = (key) => {
     const e = data.get(key);
     if (e && e.exp < Date.now()) data.delete(key);
@@ -56,6 +83,24 @@ export function memoryStore() {
       const n = (e ? e.value : 0) + 1;
       data.set(key, { value: n, exp: e ? e.exp : Date.now() + ttl * 1000 });
       return n;
+    },
+    async zadd(key, score, member) {
+      if (!zsets.has(key)) zsets.set(key, new Map());
+      zsets.get(key).set(member, Number(score));
+    },
+    async zrem(key, member) {
+      zsets.get(key)?.delete(member);
+    },
+    async zcard(key) {
+      return zsets.get(key)?.size || 0;
+    },
+    async zcount(key, min, max) {
+      return (await this.zrangebyscore(key, min, max)).length;
+    },
+    async zrangebyscore(key, min, max) {
+      const lo = bound(min, true);
+      const hi = bound(max, false);
+      return [...(zsets.get(key) || new Map())].filter(([, v]) => lo(v) && hi(v)).sort((a, b) => a[1] - b[1]).map(([m]) => m);
     },
   };
 }

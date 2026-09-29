@@ -115,15 +115,40 @@ export function shareUrl(baseUrl, card) {
   return `${String(baseUrl).replace(/\/+$/, '')}/r?${encodeCard(card)}`;
 }
 
+/** Rankings need a crowd: below this many published reports, no "more addicted than" line. */
+export const MIN_PATIENTS_FOR_RANK = 10;
+
+/**
+ * { dir: 'more' | 'less', pct, total } from how many published scores are below and above this
+ * one. 'more' = more addicted than pct% of patients, 'less' = more reasonable than pct%.
+ */
+export function rankFrom(below, above, total) {
+  if (!(total >= MIN_PATIENTS_FOR_RANK)) return null;
+  const more = Math.floor((below / total) * 100);
+  const less = Math.floor((above / total) * 100);
+  if (more >= less && more > 0) return { dir: 'more', pct: more, total };
+  if (less > 0) return { dir: 'less', pct: less, total };
+  return null;
+}
+
+/** "More addicted than 72% of patients" in the page language. */
+export function rankText(rank, lang = 'en') {
+  if (!rank) return '';
+  if (lang === 'fr') return `${rank.dir === 'more' ? 'Plus accro' : 'Plus raisonnable'} que ${rank.pct} % des patients`;
+  return `${rank.dir === 'more' ? 'More addicted' : 'More reasonable'} than ${rank.pct}% of patients`;
+}
+
 export function shareText(card, lang = 'en') {
   if (lang === 'fr') {
     const st = STAGES_FR[card.stage];
     const ar = ARCHETYPES_FR[card.archetype];
-    return `Je viens de passer le Claude Dependency Test : ${card.score}/100, stade ${card.stage} (${st.name.toLowerCase()}).\nDiagnostic : ${ar.name} ${ARCHETYPES[card.archetype].emoji}\nEt toi, à quel point es-tu accro à Claude ?`;
+    const rk = card.rank ? `\n${rankText(card.rank, 'fr')}.` : '';
+    return `Je viens de passer le Claude Dependency Test : ${card.score}/100, stade ${card.stage} (${st.name.toLowerCase()}).${rk}\nDiagnostic : ${ar.name} ${ARCHETYPES[card.archetype].emoji}\nEt toi, à quel point es-tu accro à Claude ?`;
   }
   const st = STAGES[card.stage];
   const ar = ARCHETYPES[card.archetype];
-  return `Just got my Claude Dependency Test results: ${card.score}/100, Stage ${card.stage} (${st.name}).\nDiagnosis: ${ar.name} ${ar.emoji}\nHow addicted to Claude are you?`;
+  const rk = card.rank ? `\n${rankText(card.rank)}.` : '';
+  return `Just got my Claude Dependency Test results: ${card.score}/100, Stage ${card.stage} (${st.name}).${rk}\nDiagnosis: ${ar.name} ${ar.emoji}\nHow addicted to Claude are you?`;
 }
 
 /** One-click share links. `via` credits the author: X shows "via @…" and suggests following. */
@@ -551,6 +576,11 @@ function glowText(ctx, text, x, y, color, blur = 14) {
   ctx.restore();
 }
 
+/** The two card lines for a rank: "▲ MORE ADDICTED THAN 72%" / "OF 21 PATIENTS". English only. */
+export function rankLines(rank) {
+  return [`${rank.dir === 'more' ? '▲ MORE ADDICTED' : '▼ MORE REASONABLE'} THAN ${rank.pct}%`, `OF ${rank.total} PATIENTS`];
+}
+
 export function drawCard(ctx, card, { siteLabel = '', credit = '' } = {}) {
   const c = MONITOR;
   const W = CARD_WIDTH;
@@ -644,6 +674,13 @@ export function drawCard(ctx, card, { siteLabel = '', credit = '' } = {}) {
   glowText(ctx, String(card.score), W - 48, 380, '#EFFFF5', 26);
   ctx.font = `400 34px ${DISPLAY}`;
   glowText(ctx, `STAGE ${card.stage} · ${stage.name.toUpperCase()}`, W - 48, 428, c.stages[card.stage], 10);
+  if (card.rank) {
+    const [l1, l2] = rankLines(card.rank);
+    ctx.font = `400 24px ${DISPLAY}`;
+    glowText(ctx, l1, W - 48, 464, card.rank.dir === 'more' ? c.amber : c.ph, 6);
+    ctx.fillStyle = c.dim;
+    ctx.fillText(l2, W - 48, 490);
+  }
   ctx.textAlign = 'left';
 
   // Readouts row

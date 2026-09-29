@@ -16,7 +16,7 @@ import { computeMetrics } from './lib/metrics.mjs';
 import { archetypeFor, scoreMetrics, stageFor } from './lib/score.mjs';
 import { publish, unpublish } from './lib/publish.mjs';
 import { buildResult, finalizeShare, renderHtml, renderShareFooter, toPublicReport } from './lib/report.mjs';
-import { badgeUrl } from '../assets/card.js';
+import { badgeUrl, rankText, shareText } from '../assets/card.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
@@ -128,6 +128,11 @@ export async function run(argv, env = process.env, { fetchImpl = globalThis.fetc
       result.published = p;
       result.share.url = p.url;
       result.share.badge = badgeUrl(baseUrl, result.card, p.slug);
+      if (p.rank) {
+        // "More addicted than 72% of patients": computed by the share site from published scores.
+        result.rank = { ...p.rank, text: rankText(p.rank) };
+        result.share.text = shareText({ ...result.card, rank: p.rank });
+      }
       finalizeShare(result);
     } catch (err) {
       result.publishError = `${err.message}. Falling back to a link that carries the card in its URL.`;
@@ -146,6 +151,7 @@ export async function run(argv, env = process.env, { fetchImpl = globalThis.fetc
   }
   const lines = [result.bulletin, ''];
   if (result.published) {
+    if (result.rank) lines.push(`  ${result.rank.text} (${result.rank.total} diagnosed so far).`);
     lines.push(`  Online: ${result.published.url}${result.published.updated ? ' (updated)' : ''}`);
     lines.push('  Only aggregate numbers were published. Delete it: --unpublish · Stay offline next time: --no-publish');
   }

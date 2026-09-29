@@ -7,6 +7,7 @@
 // on a salted hash of the IP that expires after an hour).
 import { sanitizeReport } from '../public/card.js';
 import { SLUG_RE, TTL_SECONDS, getStore, reportKey } from '../lib/store.js';
+import { forgetScore, rankFor, recordScore, safely } from '../lib/rank.js';
 
 export const config = { runtime: 'edge' };
 
@@ -85,7 +86,9 @@ export default async function handler(request) {
     const token = randomString(32);
     const now = new Date().toISOString();
     await store.set(reportKey(newSlug), { report, tokenHash: await sha256(token), createdAt: now, updatedAt: now }, TTL_SECONDS);
-    return json(201, { slug: newSlug, url: `${url.origin}/case/${newSlug}`, token });
+    await safely(() => recordScore(store, newSlug, report.score));
+    const rank = await safely(() => rankFor(store, report.score));
+    return json(201, { slug: newSlug, url: `${url.origin}/case/${newSlug}`, token, rank });
   }
 
   if ((request.method === 'PUT' || request.method === 'DELETE') && SLUG_RE.test(slug)) {
@@ -94,12 +97,15 @@ export default async function handler(request) {
     if (!entry) return json(status, { error: status === 404 ? 'not found' : 'wrong token' });
     if (request.method === 'DELETE') {
       await store.del(reportKey(slug));
+      await safely(() => forgetScore(store, slug));
       return json(204, null);
     }
     const { report, status: bad, error } = await readReport(request);
     if (!report) return json(bad, { error });
     await store.set(reportKey(slug), { ...entry, report, updatedAt: new Date().toISOString() }, TTL_SECONDS);
-    return json(200, { slug, url: `${url.origin}/case/${slug}` });
+    await safely(() => recordScore(store, slug, report.score));
+    const rank = await safely(() => rankFor(store, report.score));
+    return json(200, { slug, url: `${url.origin}/case/${slug}`, rank });
   }
 
   return json(405, { error: 'method not allowed' });

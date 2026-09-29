@@ -102,6 +102,8 @@ footer { padding: 40px 0 56px; border-top: 1px dashed var(--line); color: var(--
 .install-alt { font: 400 18px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
 .cmd .n.sh::after { content: none; }
 .install-alt.first { margin-top: 4px; }
+.patients { font: 400 20px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); margin: 0 0 14px; }
+.patients::before { content: '●'; margin-right: 8px; animation: rec 1.6s steps(1) infinite; }
 /* Charts */
 .chart svg { display: block; overflow: visible; }
 .chart text { fill: var(--muted); font: 15px var(--display); letter-spacing: .04em; }

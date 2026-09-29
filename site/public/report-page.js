@@ -136,14 +136,15 @@ function toolbox(container, usage) {
 // Boot (last, so every helper above is initialized).
 const dataEl = $('report-data');
 if (dataEl) {
-  const { report: r, url } = JSON.parse(dataEl.textContent);
+  const { report: r, url, rank } = JSON.parse(dataEl.textContent);
+  const card = rank ? { ...r.card, rank } : r.card;
   const heads = headlines(r, 4); // the card image stays in English: it travels beyond this reader
-  const { exportPng } = mountCard($('card'), () => ({ ...r.card, ecg: r.daily, headlines: heads }), location.host);
+  const { exportPng } = mountCard($('card'), () => ({ ...card, ecg: r.daily, headlines: heads }), location.host);
   for (const s of ['', '-2']) {
     if (!$(`save${s}`)) continue;
     const id = (k) => $(`${k}${s}`);
     wireShare({
-      card: r.card, url, text: shareText(r.card, LANG), exportPng, status: id('status'),
+      card, url, text: shareText(card, LANG), exportPng, status: id('status'),
       els: { save: id('save'), copyImg: id('copy-img'), copyLink: id('copy-link'), native: id('native'), x: id('x'), linkedin: id('linkedin'), bluesky: id('bluesky'), mastodon: id('mastodon') },
     });
   }

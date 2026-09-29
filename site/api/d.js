@@ -11,6 +11,7 @@ import {
   compact,
   formatHour,
   formatMinuteOfDay,
+  rankText,
   headlines,
   severityFlag,
   usageFacts,
@@ -19,7 +20,8 @@ import {
 import { doctorNotes, prescription, sideEffects, typingTime } from '../lib/notes.js';
 import { attendance, dayStrip, durationCompare, ecg, medicineBox, pictogram, pillWaffle, radar, radialClock, splitBar, stageScale } from '../lib/infographics.js';
 import { DEMO_REPORT } from '../lib/demo.js';
-import { loadReport } from '../lib/store.js';
+import { getStore, loadReport } from '../lib/store.js';
+import { rankFor, safely } from '../lib/rank.js';
 import { badgeBlock, detectLang, esc, followBlock, footer, head, htmlResponse, installCtaHtml, safeJson, shareButtonsHtml, withLang } from '../lib/layout.js';
 
 export const config = { runtime: 'edge' };
@@ -83,6 +85,9 @@ const CSS = `
   @media (max-width: 820px) { .mon-score { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 10px; } }
   .mon-score b { font: 400 clamp(170px, 26vw, 260px)/.8 var(--display); color: #EFFFF5; text-align: right; text-shadow: 0 0 14px rgba(59, 255, 140, .8), 0 0 50px rgba(59, 255, 140, .35); margin-top: 18px; }
   .mon-score .stg { text-transform: uppercase; font: 400 30px/1 var(--display); text-align: right; letter-spacing: .04em; margin-top: 10px; text-shadow: 0 0 10px currentColor; }
+  .mon-score .rank { font: 400 24px/1.1 var(--display); text-align: right; letter-spacing: .04em; text-transform: uppercase; margin-top: 12px; color: var(--ph); text-shadow: 0 0 8px currentColor; }
+  .mon-score .rank.more { color: var(--amber); }
+  .mon-score .rank small { display: block; font-size: 17px; color: var(--muted); text-shadow: none; margin-top: 2px; }
   .mon-dx { padding: 18px 0 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 16px; }
   .mon-dx h1 { font-size: clamp(40px, 6.4vw, 76px); margin: 6px 0 8px; }
   .mon-dx p { margin: 0; color: var(--ink); max-width: 60ch; }
@@ -314,7 +319,8 @@ export function renderReportPage(entry, origin, lang = 'en') {
     ? `Diagnostic : ${arch.name}. ${arch.tagline} ${num(r.sample.prompts)} prompts envoyés à Claude, ${r.sample.activeHours.toFixed(0)} heures actives en ${r.window.days} jours. À quel point es-tu accro à Claude ?`
     : `Diagnosis: ${arch.name}. ${arch.tagline} ${num(r.sample.prompts)} prompts to Claude, ${r.sample.activeHours.toFixed(0)} active hours in ${r.window.days} days. How addicted to Claude are you?`;
   const badge = `[![Claude Dependency: Stage ${r.stage}](${origin}/badge/${slug})](${pageUrl})`;
-  const data = { slug, url: pageUrl, report: r, lang };
+  const rank = entry.rank || null;
+  const data = { slug, url: pageUrl, report: r, lang, rank };
   const updated = entry.updatedAt ? L(`Updated ${day(entry.updatedAt.slice(0, 10))}`, `Mis à jour le ${day(entry.updatedAt.slice(0, 10))}`) : L('Example report', 'Dossier exemple');
   const facts = Object.fromEntries(usageFacts(u, lang).map((f) => [f.key, f]));
   const caseNo = slug === 'demo' ? 'DEMO-0001' : `${slug.slice(0, 4)}-${slug.slice(4)}`.toUpperCase();
@@ -335,7 +341,7 @@ export function renderReportPage(entry, origin, lang = 'en') {
     <div class="mon-bar"><span class="rec">Claude Dependency Monitor</span><span>${L(`Bed 04 · Case #${esc(caseNo)} · anonymous developer`, `Lit 04 · Dossier nº ${esc(caseNo)} · développeur anonyme`)}</span><span class="alarm${alarm.startsWith('▲') ? '' : ' ok'}">${esc(alarm)}</span></div>
     <div class="mon-grid">
       <div><div class="lbl"><span>${L('II · Prompts to Claude per day', 'II · Prompts à Claude par jour')}</span><span>${r.window.days} ${L('D', 'J')} · ${esc(day(r.window.startDay))} → ${esc(day(r.window.endDay))}</span></div>${ecg(r.daily, r.window.startDay, lang)}<p class="ecg-legend">${L('One spike per day. The taller the spike, the more prompts you sent Claude that day. Flat line: a day off.', "Un pic par jour. Plus il est haut, plus tu as envoyé de prompts à Claude ce jour-là. Ligne plate : jour de repos.")}</p></div>
-      <div class="mon-score"><div class="lbl"><span>${L('Claude dependency', 'Dépendance à Claude')}</span><span>/100</span></div><b data-count="${r.score}" aria-label="${r.score} ${L('out of 100', 'sur 100')}">${r.score}</b><div class="stg" style="color:var(--s${r.stage})">${L('Stage', 'Stade')} ${r.stage} · ${esc(stage.name.toUpperCase())}</div></div>
+      <div class="mon-score"><div class="lbl"><span>${L('Claude dependency', 'Dépendance à Claude')}</span><span>/100</span></div><b data-count="${r.score}" aria-label="${r.score} ${L('out of 100', 'sur 100')}">${r.score}</b><div class="stg" style="color:var(--s${r.stage})">${L('Stage', 'Stade')} ${r.stage} · ${esc(stage.name.toUpperCase())}</div>${rank ? `<div class="rank ${rank.dir}">${rank.dir === 'more' ? '▲' : '▼'} ${esc(rankText(rank, lang))}<small>${L(`among ${rank.total} patients diagnosed`, `parmi ${rank.total} patients diagnostiqués`)}</small></div>` : ''}</div>
     </div>
     ${stageScale(r.score, r.stage, lang)}
     <div class="mon-dx"><div class="lbl amber"><span>DX · ${esc(arch.code)}</span></div><h1>${esc(arch.name)}</h1><p>${esc(arch.tagline)}${fr ? ` <span class="muted small">(${esc(archEn.name)})</span>` : ''}</p></div>
@@ -452,6 +458,8 @@ export default async function handler(request) {
   const explicit = url.searchParams.has('lang');
   const slug = url.searchParams.get('slug') || url.pathname.split('/case/')[1] || '';
   const entry = slug === 'demo' ? { slug: 'demo', report: DEMO_REPORT } : await loadReport(slug);
+  const store = entry && getStore();
+  if (store) entry.rank = await safely(() => rankFor(store, entry.report.score));
   if (!entry) {
     const fr = lang === 'fr';
     return htmlResponse(`${head({ title: fr ? 'Dossier introuvable · Claude Dependency Test' : 'Report not found · Claude Dependency Test', description: fr ? 'Ce dossier a été supprimé ou a expiré.' : 'This lab report was deleted or has expired.', image: `${url.origin}/og`, canonical: `${url.origin}/`, lang })}
