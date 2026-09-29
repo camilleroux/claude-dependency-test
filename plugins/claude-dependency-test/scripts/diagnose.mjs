@@ -80,7 +80,7 @@ export async function run(argv, env = process.env, { fetchImpl = globalThis.fetc
   if (args.unpublish) {
     const r = await unpublish({ stateFile, fetchImpl });
     const result = { tool: 'claude-dependency-test', version: VERSION, unpublished: r };
-    return { result, text: r.deleted ? `Deleted ${r.url}. The page, its preview image and its badge are gone.` : `Nothing to delete: ${r.reason}.` };
+    return { result, text: r.deleted ? `Deleted ${r.url}. It's gone from the database now; cached copies of the page, preview image and badge expire within 5 minutes.` : `Nothing to delete: ${r.reason}.` };
   }
   const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'scoring.json'), 'utf8'));
   const configDir = args.configDir || env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
