@@ -40,6 +40,6 @@ export default async function handler(request) {
   }
   const ok = s !== null && s <= 100 && st !== null;
   return new Response(badgeSvg(ok ? s : 0, ok ? st : null), {
-    headers: { 'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': slug ? 'public, max-age=300, s-maxage=600' : 'public, max-age=86400, s-maxage=31536000' },
+    headers: { 'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': slug ? 'public, max-age=60, s-maxage=60' : 'public, max-age=86400, s-maxage=31536000' },
   });
 }

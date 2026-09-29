@@ -93,6 +93,6 @@ export default async function handler(request) {
     width: 1200,
     height: 630,
     fonts,
-    headers: { 'cache-control': slug ? 'public, max-age=600, s-maxage=3600' : 'public, max-age=86400, s-maxage=31536000, immutable' },
+    headers: { 'cache-control': slug && slug !== 'demo' ? 'public, max-age=300, s-maxage=300' : 'public, max-age=86400, s-maxage=31536000, immutable' },
   });
 }

@@ -431,5 +431,6 @@ export default async function handler(request) {
 <script type="module" src="/report-page.js"></script>
 </body></html>`, { status: 404, cache: 'no-store' });
   }
-  return htmlResponse(renderReportPage(entry, url.origin));
+  // Short CDN cache: an unpublished or updated case file must disappear quickly everywhere.
+  return htmlResponse(renderReportPage(entry, url.origin), { cache: slug === 'demo' ? 'public, max-age=300, s-maxage=3600' : 'public, max-age=60, s-maxage=60' });
 }
