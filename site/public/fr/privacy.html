@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/site.css">
 <script src="/va.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 <style>
   article { max-width: 72ch; padding: 16px 0 40px; }
   article h2 { font-size: 26px; margin-top: 36px; }
@@ -62,6 +63,7 @@
         <tr><td>Publier le dossier que tu demandes, son image d'aperçu et son badge</td><td>Exécution du service que tu demandes, art. 6(1)(b)</td><td>365 jours après ta dernière mise à jour, puis suppression automatique</td></tr>
         <tr><td>Limitation de débit par empreinte d'IP salée</td><td>Intérêt légitime à prévenir les abus, art. 6(1)(f)</td><td>1 heure</td></tr>
         <tr><td>Mesure d'audience anonyme (Vercel Web Analytics)</td><td>Intérêt légitime à savoir comment le site est utilisé, art. 6(1)(f)</td><td>Chiffres agrégés, selon la durée de conservation de Vercel</td></tr>
+        <tr><td>Mesure de la vitesse des pages (Vercel Speed Insights)</td><td>Intérêt légitime à garder un site rapide, art. 6(1)(f)</td><td>Chiffres agrégés, selon la durée de conservation de Vercel</td></tr>
         <tr><td>Journaux de requêtes de l'hébergeur</td><td>Intérêt légitime à faire fonctionner et sécuriser le site, art. 6(1)(f)</td><td>Selon la durée de conservation de l'hébergeur (réglée au minimum disponible)</td></tr>
       </tbody>
     </table></div>
@@ -70,8 +72,8 @@
     <h2>Qui reçoit les données</h2>
     <p>Vercel (hébergement et diffusion) et Upstash (base de données) traitent les données pour notre compte, en tant que sous-traitants, dans le cadre d'accords de traitement des données. Vercel est établi aux États-Unis. Les transferts reposent sur le Data Privacy Framework UE–États-Unis et les clauses contractuelles types de la Commission européenne. Nous ne vendons ni ne partageons les données avec qui que ce soit d'autre, et il n'y a pas de publicité.</p>
 
-    <h2>Cookies et mesure d'audience</h2>
-    <p>Pas de cookies, pas de traceurs publicitaires, pas de scripts tiers. Nous comptons les visites avec Vercel Web Analytics, qui fonctionne sans cookies et ne conserve pas les adresses IP : un visiteur n'est reconnu que par une empreinte de la requête, effacée au bout de 24 heures, et nous ne voyons que des chiffres agrégés (pages, sites référents, pays, types d'appareils et de navigateurs). Les adresses des dossiers sont anonymisées en <code>/case/[id]</code> avant tout envoi, et les paramètres d'URL sont retirés.</p>
+    <h2>Cookies, mesure d'audience et de vitesse</h2>
+    <p>Pas de cookies, pas de traceurs publicitaires, pas de scripts tiers. Nous comptons les visites avec Vercel Web Analytics, qui fonctionne sans cookies et ne conserve pas les adresses IP : un visiteur n'est reconnu que par une empreinte de la requête, effacée au bout de 24 heures, et nous ne voyons que des chiffres agrégés (pages, sites référents, pays, types d'appareils et de navigateurs). Nous mesurons aussi la vitesse des pages avec Vercel Speed Insights, lui aussi sans cookies : temps de chargement, réactivité et stabilité de l'affichage, avec l'adresse de la page, le type d'appareil et le navigateur. Pour ces deux outils, les adresses des dossiers sont anonymisées en <code>/case/[id]</code> avant tout envoi, et les paramètres d'URL sont retirés.</p>
 
     <h2>Tes droits</h2>
     <ul>

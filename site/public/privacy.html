@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/site.css">
 <script src="/va.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 <style>
   article { max-width: 72ch; padding: 16px 0 40px; }
   article h2 { font-size: 26px; margin-top: 36px; }
@@ -61,6 +62,7 @@
         <tr><td>Publishing the report you asked for, its preview image and badge</td><td>Performance of the service you request, Art. 6(1)(b)</td><td>365 days after your last update, then deleted automatically</td></tr>
         <tr><td>Rate limiting with a salted IP hash</td><td>Legitimate interest in preventing abuse, Art. 6(1)(f)</td><td>1 hour</td></tr>
         <tr><td>Anonymous audience measurement (Vercel Web Analytics)</td><td>Legitimate interest in knowing how the site is used, Art. 6(1)(f)</td><td>Aggregated figures, per Vercel's retention</td></tr>
+        <tr><td>Page speed measurement (Vercel Speed Insights)</td><td>Legitimate interest in keeping the site fast, Art. 6(1)(f)</td><td>Aggregated figures, per Vercel's retention</td></tr>
         <tr><td>Hosting request logs</td><td>Legitimate interest in running and securing the site, Art. 6(1)(f)</td><td>Per the host's log retention (kept to the minimum available)</td></tr>
       </tbody>
     </table></div>
@@ -69,8 +71,8 @@
     <h2>Who receives it</h2>
     <p>Vercel (hosting and content delivery) and Upstash (database) process the data on our behalf as processors, under data processing agreements. Vercel is based in the United States. Transfers rely on the EU-U.S. Data Privacy Framework and the European Commission's standard contractual clauses. We don't sell or share data with anyone else, and we don't use advertising.</p>
 
-    <h2>Cookies and audience measurement</h2>
-    <p>No cookies, no advertising trackers, no third-party scripts. We count visits with Vercel Web Analytics, which works without cookies and doesn't store IP addresses: a visitor is recognized only by a hash of the request, discarded after 24 hours, and we only see aggregated figures (pages, referring sites, countries, device and browser types). Case file addresses are anonymized to <code>/case/[id]</code> before anything is sent, and query strings are dropped.</p>
+    <h2>Cookies, audience and speed measurement</h2>
+    <p>No cookies, no advertising trackers, no third-party scripts. We count visits with Vercel Web Analytics, which works without cookies and doesn't store IP addresses: a visitor is recognized only by a hash of the request, discarded after 24 hours, and we only see aggregated figures (pages, referring sites, countries, device and browser types). We also measure page speed with Vercel Speed Insights, also without cookies: loading time, responsiveness and layout stability, with the page address, device type and browser. Case file addresses are anonymized to <code>/case/[id]</code> before anything is sent to either tool, and query strings are dropped.</p>
 
     <h2>Your rights</h2>
     <ul>

@@ -73,6 +73,7 @@ ${alternates ? `<link rel="alternate" hreflang="en" href="${esc(alternates.en)}"
 <link rel="stylesheet" href="/site.css">
 <script src="/va.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 ${extraCss ? `<style>${extraCss}</style>` : ''}
 </head>
 <body>
