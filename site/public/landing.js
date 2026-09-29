@@ -1,7 +1,7 @@
 // Landing page (/ and /fr): install block, rotating demo card, stages, conditions and scoring table.
 // The page language comes from <html lang>; the demo card image stays in English on purpose.
 import { ARCHETYPES, ARCHETYPES_FR, CRITERIA_FR, STAGES, STAGES_FR } from '/card.js';
-import { mountCard, renderInstall } from '/ui.js';
+import { bindCopyButtons, mountCard, renderInstall } from '/ui.js';
 import { FOLLOW, REPO } from '/site-config.js';
 
 const fr = document.documentElement.lang === 'fr';
@@ -22,6 +22,7 @@ $('follow').replaceChildren(...FOLLOW.flatMap((f, i) => {
 
 $('gh').href = `https://github.com/${REPO}`;
 renderInstall($('install'));
+bindCopyButtons();
 
 const archName = (slug) => (fr ? ARCHETYPES_FR[slug].name : ARCHETYPES[slug].name);
 const series = (seed, base) => Array.from({ length: 30 }, (_, i) => ((i * seed) % 11 === 3 ? 0 : Math.round(base * (0.35 + ((i * seed * 7) % 13) / 13))));

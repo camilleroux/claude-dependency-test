@@ -99,6 +99,8 @@ footer { padding: 40px 0 56px; border-top: 1px dashed var(--line); color: var(--
 .cta { background: var(--screen); border: 1px solid var(--line-2); border-radius: 6px; padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; margin-top: 36px; }
 @media (max-width: 860px) { .cta { grid-template-columns: minmax(0, 1fr); } }
 .cta .install { max-width: none; }
+.install-alt { font: 400 18px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
+.cmd .n.sh::after { content: none; }
 /* Charts */
 .chart svg { display: block; overflow: visible; }
 .chart text { fill: var(--muted); font: 15px var(--display); letter-spacing: .04em; }

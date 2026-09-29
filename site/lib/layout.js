@@ -110,7 +110,8 @@ export const installCtaHtml = (lang = 'en') => `
     <div><div class="install">${INSTALL_COMMANDS.map(
       (cmd, i) => `<div class="cmd"><span class="n">${i + 1}</span><code>${esc(cmd)}</code><button class="btn" type="button" data-copy="${esc(cmd)}">${L(lang, 'Copy', 'Copier')}</button></div>`,
     ).join('')}</div>
-      <p class="muted small" style="margin-top:10px">${L(lang, 'No plugin? Run <code>npx claude-dependency-test</code> in any terminal.', 'Pas envie du plugin ? Lance <code>npx claude-dependency-test</code> dans n\'importe quel terminal.')}</p></div>
+      <p class="install-alt">${L(lang, 'Or from any terminal, no plugin needed:', "Ou depuis n'importe quel terminal, sans plugin :")}</p>
+      <div class="install"><div class="cmd"><span class="n sh">$</span><code>npx claude-dependency-test</code><button class="btn" type="button" data-copy="npx claude-dependency-test">${L(lang, 'Copy', 'Copier')}</button></div></div></div>
   </section>`;
 export const installCta = installCtaHtml();
 
