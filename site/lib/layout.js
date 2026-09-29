@@ -105,13 +105,16 @@ export const installCtaHtml = (lang = 'en') => `
     <div>
       <p class="kicker">${L(lang, 'Your turn', 'À toi')}</p>
       <h2>${L(lang, "Think you're less addicted? Prove it.", 'Tu te crois moins accro ? Prouve-le.')}</h2>
-      <p class="muted">${L(lang, 'Three commands in Claude Code. The score is computed on your machine. Your prompts, code and file names never leave it.', 'Trois commandes dans Claude Code. Le score est calculé sur ta machine. Tes prompts, ton code et tes noms de fichiers ne la quittent jamais.')}</p>
+      <p class="muted">${L(lang, 'One command in your terminal. The score is computed on your machine. Your prompts, code and file names never leave it.', 'Une commande dans ton terminal. Le score est calculé sur ta machine. Tes prompts, ton code et tes noms de fichiers ne la quittent jamais.')}</p>
     </div>
-    <div><div class="install">${INSTALL_COMMANDS.map(
+    <div>
+      <p class="install-alt first">${L(lang, 'Fastest: one command in any terminal', 'Le plus rapide : une commande dans ton terminal')}</p>
+      <div class="install"><div class="cmd"><span class="n sh">$</span><code>npx claude-dependency-test</code><button class="btn" type="button" data-copy="npx claude-dependency-test">${L(lang, 'Copy', 'Copier')}</button></div></div>
+      <p class="install-alt">${L(lang, 'Or as a Claude Code plugin, with a medical opinion written by Claude:', "Ou en plugin Claude Code, avec l'avis médical rédigé par Claude :")}</p>
+      <div class="install">${INSTALL_COMMANDS.map(
       (cmd, i) => `<div class="cmd"><span class="n">${i + 1}</span><code>${esc(cmd)}</code><button class="btn" type="button" data-copy="${esc(cmd)}">${L(lang, 'Copy', 'Copier')}</button></div>`,
     ).join('')}</div>
-      <p class="install-alt">${L(lang, 'Or from any terminal, no plugin needed:', "Ou depuis n'importe quel terminal, sans plugin :")}</p>
-      <div class="install"><div class="cmd"><span class="n sh">$</span><code>npx claude-dependency-test</code><button class="btn" type="button" data-copy="npx claude-dependency-test">${L(lang, 'Copy', 'Copier')}</button></div></div></div>
+    </div>
   </section>`;
 export const installCta = installCtaHtml();
 
