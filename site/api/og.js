@@ -1,9 +1,10 @@
 // GET /og?<card params> : 1200×630 PNG preview used by link unfurls. Mirrors the canvas card.
 import { ImageResponse } from '@vercel/og';
-import { ARCHETYPES, MONITOR, STAGES, decodeCard, ecgPoints, headlines, readouts } from '../public/card.js';
+import { ARCHETYPES, MONITOR, STAGES, decodeCard, ecgPoints, headlines, rankLines, readouts } from '../public/card.js';
+import { rankFor, safely } from '../lib/rank.js';
 import { DEMO_REPORT } from '../lib/demo.js';
 import { AUTHOR } from '../public/site-config.js';
-import { loadReport } from '../lib/store.js';
+import { getStore, loadReport } from '../lib/store.js';
 
 export const config = { runtime: 'edge' };
 
@@ -68,7 +69,8 @@ export function cardTree(card, siteLabel) {
         h({ flexDirection: 'column', flex: 1, alignItems: 'flex-end', borderLeft: `1px solid ${c.bezel}`, paddingLeft: 20 },
           h({ justifyContent: 'space-between', width: '100%' }, t({ fontSize: 26, color: c.dim }, 'CLAUDE DEPENDENCY'), t({ fontSize: 26, color: c.dim }, '/100')),
           t({ fontSize: 250, lineHeight: 0.9, color: '#EFFFF5', textShadow: glow(c.ph, 24), marginTop: 10 }, String(card.score)),
-          t({ fontSize: 34, color: c.stages[card.stage], textShadow: glow(c.stages[card.stage], 8), marginTop: 6 }, `STAGE ${card.stage} · ${stage.name.toUpperCase()}`))),
+          t({ fontSize: 34, color: c.stages[card.stage], textShadow: glow(c.stages[card.stage], 8), marginTop: 6 }, `STAGE ${card.stage} · ${stage.name.toUpperCase()}`),
+          ...(card.rank ? rankLines(card.rank).map((line, i) => t({ fontSize: 24, color: i ? c.dim : card.rank.dir === 'more' ? c.amber : c.ph, marginTop: i ? 0 : 8 }, line.replace(/^[▲▼] /, ''))) : []))),
       // readouts
       h({ marginTop: 'auto', paddingTop: 10, borderTop: `1px solid ${c.bezel}` },
         ...cells.map((r) => h({ flexDirection: 'column', width: 283 },
@@ -85,6 +87,9 @@ export default async function handler(request) {
   const slug = url.searchParams.get('slug');
   const entry = slug === 'demo' ? { report: DEMO_REPORT } : slug ? await loadReport(slug) : null;
   const card = entry ? { ...entry.report.card, ecg: entry.report.daily, headlines: headlines(entry.report, 4) } : decodeCard(url.search) || { ...DEMO_REPORT.card, ecg: DEMO_REPORT.daily };
+  // Real reports only: the demo image is cached for a year and must not freeze a ranking.
+  const store = slug && slug !== 'demo' && entry && getStore();
+  if (store) card.rank = await safely(() => rankFor(store, entry.report.score));
   const fonts = (await Promise.all([
     googleFont('VT323', 400),
     googleFont('IBM Plex Mono', 400),

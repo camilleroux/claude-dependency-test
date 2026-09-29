@@ -22,6 +22,14 @@ $('follow').replaceChildren(...FOLLOW.flatMap((f, i) => {
 
 $('gh').href = `https://github.com/${REPO}`;
 renderInstall($('install'));
+
+// Social proof: how many published reports there are (shown once there's a crowd).
+fetch('/api/stats').then((r) => r.json()).then(({ patients }) => {
+  if (!(patients >= 10)) return;
+  const n = patients.toLocaleString(fr ? 'fr-FR' : 'en-US');
+  $('patients').textContent = T(`${n} patients diagnosed so far`, `${n} patients diagnostiqués à ce jour`);
+  $('patients').hidden = false;
+}).catch(() => {});
 bindCopyButtons();
 
 const archName = (slug) => (fr ? ARCHETYPES_FR[slug].name : ARCHETYPES[slug].name);

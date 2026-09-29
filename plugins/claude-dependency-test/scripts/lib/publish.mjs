@@ -51,7 +51,7 @@ export async function publish({ baseUrl, report, stateFile, forceNew = false, fe
       headers: { ...headers, authorization: `Bearer ${state.token}` },
       body: payload,
     });
-    if (status === 200 && body && body.url) return { url: body.url, slug: state.slug, updated: true };
+    if (status === 200 && body && body.url) return { url: body.url, slug: state.slug, updated: true, rank: body.rank || null };
     if (status !== 404 && status !== 403) throw new Error(body?.error || `share site answered ${status}`);
     // The page expired or was deleted: fall through and create a new one.
   }
@@ -61,7 +61,7 @@ export async function publish({ baseUrl, report, stateFile, forceNew = false, fe
     throw new Error(body?.error || `share site answered ${status}`);
   }
   writeState(stateFile, { baseUrl, slug: body.slug, token: body.token, url: body.url, publishedAt: new Date().toISOString() });
-  return { url: body.url, slug: body.slug, updated: false };
+  return { url: body.url, slug: body.slug, updated: false, rank: body.rank || null };
 }
 
 export async function unpublish({ stateFile, fetchImpl = fetch }) {
