@@ -1,6 +1,6 @@
 // Client side of /case/:slug: card, share buttons and charts. Everything is drawn from the
 // aggregate report embedded in the page; nothing else is fetched.
-import { WEEKDAYS, headlines, shareText, topTools } from './card.js';
+import { headlines, shareText, topTools, weekdays } from './card.js';
 import { bindCopyButtons, bindThemeToggle, mountCard, wireShare } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -15,7 +15,10 @@ const el = (name, attrs = {}, parent) => {
   if (parent) parent.appendChild(node);
   return node;
 };
-const fmt = (v) => Math.round(v).toLocaleString('en-US');
+const LANG = document.documentElement.lang === 'fr' ? 'fr' : 'en';
+const T = (en, fr) => (LANG === 'fr' ? fr : en);
+const WEEKDAYS = weekdays(LANG);
+const fmt = (v) => Math.round(v).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US');
 const niceMax = (max) => {
   if (max <= 0) return 1;
   const step = 10 ** Math.floor(Math.log10(max));
@@ -36,7 +39,7 @@ function hover(target, text, mark) {
 function dataTable(container, headers, rows) {
   const d = document.createElement('details');
   d.className = 'data-table';
-  d.innerHTML = '<summary>Data table</summary><div class="table-wrap"><table><thead><tr></tr></thead><tbody></tbody></table></div>';
+  d.innerHTML = `<summary>${T('Data table', 'Tableau des données')}</summary><div class="table-wrap"><table><thead><tr></tr></thead><tbody></tbody></table></div>`;
   for (const h of headers) d.querySelector('thead tr').appendChild(Object.assign(document.createElement('th'), { textContent: h }));
   for (const row of rows) {
     const tr = document.createElement('tr');
@@ -89,7 +92,7 @@ function renderCharts(r) {
 /** Weekly pattern, Monday first; weekends highlighted. */
 function weekly(container, r) {
   const order = [1, 2, 3, 4, 5, 6, 0];
-  container.dataset.label = `Prompts by weekday. Busiest: ${WEEKDAYS[r.extras.peakWeekday]}.`;
+  container.dataset.label = T(`Prompts by weekday. Busiest: ${WEEKDAYS[r.extras.peakWeekday]}.`, `Prompts par jour de la semaine. Jour le plus chargé : ${WEEKDAYS[r.extras.peakWeekday]}.`);
   columns(container, {
     values: order.map((d) => r.weekdays[d]),
     highlight: (i) => order[i] === 0 || order[i] === 6,
@@ -97,17 +100,17 @@ function weekly(container, r) {
     tooltip: (i) => `${WEEKDAYS[order[i]]} · ${fmt(r.weekdays[order[i]])} prompts`,
     height: 180,
   });
-  dataTable(container, ['Day', 'Prompts'], order.map((d) => [WEEKDAYS[d], fmt(r.weekdays[d])]));
+  dataTable(container, [T('Day', 'Jour'), 'Prompts'], order.map((d) => [WEEKDAYS[d], fmt(r.weekdays[d])]));
 }
 
 /** Horizontal bars, one series: label left, value at the tip. */
 function toolbox(container, usage) {
   const rows = topTools(usage, 8);
   if (!rows.length) {
-    container.textContent = 'No tool calls recorded.';
+    container.textContent = T('No tool calls recorded.', "Aucun appel d'outil enregistré.");
     return;
   }
-  const label = { mcp: 'MCP tools', other: 'Other tools', Agent: 'Agent (subagents)' };
+  const label = LANG === 'fr' ? { mcp: 'Outils MCP', other: 'Autres outils', Agent: 'Agent (sous-agents)' } : { mcp: 'MCP tools', other: 'Other tools', Agent: 'Agent (subagents)' };
   const max = rows[0][1];
   const grid = document.createElement('div');
   grid.className = 'bars';
@@ -123,7 +126,7 @@ function toolbox(container, usage) {
     v.className = 'val';
     v.textContent = fmt(n);
     row.append(bar, v);
-    hover(row, `${label[name] || name} · ${fmt(n)} calls`, bar);
+    hover(row, `${label[name] || name} · ${fmt(n)} ${T('calls', 'appels')}`, bar);
     grid.append(l, row);
   }
   container.appendChild(grid);
@@ -134,13 +137,13 @@ function toolbox(container, usage) {
 const dataEl = $('report-data');
 if (dataEl) {
   const { report: r, url } = JSON.parse(dataEl.textContent);
-  const heads = headlines(r, 4);
+  const heads = headlines(r, 4); // the card image stays in English: it travels beyond this reader
   const { exportPng } = mountCard($('card'), () => ({ ...r.card, ecg: r.daily, headlines: heads }), location.host);
   for (const s of ['', '-2']) {
     if (!$(`save${s}`)) continue;
     const id = (k) => $(`${k}${s}`);
     wireShare({
-      card: r.card, url, text: shareText(r.card), exportPng, status: id('status'),
+      card: r.card, url, text: shareText(r.card, LANG), exportPng, status: id('status'),
       els: { save: id('save'), copyImg: id('copy-img'), copyLink: id('copy-link'), native: id('native'), x: id('x'), linkedin: id('linkedin'), bluesky: id('bluesky'), mastodon: id('mastodon') },
     });
   }

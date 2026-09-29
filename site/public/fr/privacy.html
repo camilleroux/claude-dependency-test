@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidentialité · Claude Dependency Test</title>
+<meta name="description" content="Ce que le Claude Dependency Test conserve, pourquoi, combien de temps, et comment le supprimer.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="canonical" href="https://dependency.camilleroux.com/fr/privacy">
+<link rel="alternate" hreflang="en" href="https://dependency.camilleroux.com/privacy">
+<link rel="alternate" hreflang="fr" href="https://dependency.camilleroux.com/fr/privacy">
+<link rel="alternate" hreflang="x-default" href="https://dependency.camilleroux.com/privacy">
+<link rel="stylesheet" href="/site.css">
+<script src="/va.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  article { max-width: 72ch; padding: 16px 0 40px; }
+  article h2 { font-size: 26px; margin-top: 36px; }
+  article li { margin: 4px 0; }
+  article td, article th { font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/fr">CLAUDE DEPENDENCY TEST</a>
+    <span class="nav-links"><span class="nav-meta">Confidentialité</span><a class="btn lang-switch" href="/privacy" hreflang="en" lang="en">EN</a></span>
+  </nav>
+  <article>
+    <p class="kicker">Politique de confidentialité · mise à jour le 29/09/2026</p>
+    <h1>Confidentialité</h1>
+    <p class="lead" style="max-width:none">En bref : ton score est calculé sur ta machine. Si tu publies, on conserve uniquement des chiffres agrégés, pendant un an maximum, et tu peux les supprimer à tout moment.</p>
+    <p class="muted small">Traduction de courtoisie de la <a href="/privacy">version anglaise</a>.</p>
+
+    <h2>Qui est responsable</h2>
+    <p>Ce site et le plugin sont édités par <strong>Camille Roux</strong> (<a href="https://www.camilleroux.com/?ref=claude-dependency-test">camilleroux.com</a>), responsable du traitement des données décrites ci-dessous. Contact : <a href="https://www.camilleroux.com/contact/?ref=claude-dependency-test">formulaire de contact</a>.</p>
+    <p>Hébergement : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis. Base de données : Upstash, Inc., dans sa région Union européenne.</p>
+    <p>C'est un projet de fan non officiel, sans lien avec Anthropic.</p>
+
+    <h2>Sur ta machine (rien n'est collecté)</h2>
+    <p>Le plugin lit tes transcripts Claude Code en local pour calculer le score. Il n'utilise que les horodatages, les types de messages, les noms de modèles, les noms d'outils, les nombres de tokens et les marqueurs d'erreur. Il ne lit ni n'envoie jamais le texte de tes prompts ou des réponses de Claude, ton code, tes chemins de fichiers, tes noms de projets ou de branches git. Ce traitement a lieu sur ton ordinateur et nous n'en recevons rien. La liste exacte des champs est dans le <a href="https://github.com/camilleroux/claude-dependency-test#privacy">README</a>.</p>
+
+    <h2>Ce que nous conservons quand tu publies</h2>
+    <p>Lancer <code>/claude-dependency-test:diagnose</code> publie ton dossier, sauf si tu ajoutes <code>--no-publish</code>. Nous conservons alors un enregistrement contenant :</p>
+    <ul>
+      <li>ton score, ton stade et ton diagnostic, ainsi que la valeur et les points de chacun des 9 symptômes ;</li>
+      <li>des compteurs : prompts, sessions, jours et heures actifs, prompts par heure de la journée, par jour de la semaine et par jour de la période d'observation (avec ses dates de début et de fin) ;</li>
+      <li>des totaux d'usage : tokens, appels par outil intégré (outils MCP regroupés, sans nom de serveur), sous-agents, interruptions, compactages de contexte, plus long tour, nombre de projets (un nombre, sans les noms), heures du premier et du dernier prompt ;</li>
+      <li>la part des réponses par famille de modèles (Opus, Sonnet…) ;</li>
+      <li>une empreinte (hash) de ton jeton de suppression, et les dates de création et de mise à jour.</li>
+    </ul>
+    <p>Le serveur refuse tout texte qui n'est pas un nombre, une date ou une valeur d'une liste fixe : l'enregistrement ne peut donc rien contenir de ce que tu as tapé. Il ne contient ni nom, ni email, ni compte, ni adresse IP, ni identifiant d'appareil. Nous ne savons pas qui tu es, sauf si tu dis à d'autres que le lien est le tien.</p>
+    <p><strong>Ton dossier est public pour toute personne qui a le lien.</strong> Les pages de résultat demandent aux moteurs de recherche de ne pas les indexer, mais un lien que tu publies peut être vu et partagé par d'autres. Ne publie pas si tu ne veux pas que tes habitudes d'usage (par exemple les heures et jours où tu as travaillé) soient visibles.</p>
+
+    <h2>Sécurité et prévention des abus</h2>
+    <p>Pour limiter les abus, chaque publication ou mise à jour incrémente un compteur associé à une empreinte salée et irréversible de ton adresse IP. Ce compteur est supprimé au bout d'une heure. Notre hébergeur conserve des journaux techniques de requêtes (incluant les adresses IP) pendant une courte période, pour faire fonctionner le service.</p>
+
+    <h2>Pourquoi, et sur quelle base légale</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Finalité</th><th>Base légale (RGPD)</th><th>Durée de conservation</th></tr></thead>
+      <tbody>
+        <tr><td>Publier le dossier que tu demandes, son image d'aperçu et son badge</td><td>Exécution du service que tu demandes, art. 6(1)(b)</td><td>365 jours après ta dernière mise à jour, puis suppression automatique</td></tr>
+        <tr><td>Limitation de débit par empreinte d'IP salée</td><td>Intérêt légitime à prévenir les abus, art. 6(1)(f)</td><td>1 heure</td></tr>
+        <tr><td>Mesure d'audience anonyme (Vercel Web Analytics)</td><td>Intérêt légitime à savoir comment le site est utilisé, art. 6(1)(f)</td><td>Chiffres agrégés, selon la durée de conservation de Vercel</td></tr>
+        <tr><td>Journaux de requêtes de l'hébergeur</td><td>Intérêt légitime à faire fonctionner et sécuriser le site, art. 6(1)(f)</td><td>Selon la durée de conservation de l'hébergeur (réglée au minimum disponible)</td></tr>
+      </tbody>
+    </table></div>
+    <p>Le dossier est une blague sur des statistiques d'usage. Ce ne sont pas des données de santé ni une évaluation médicale.</p>
+
+    <h2>Qui reçoit les données</h2>
+    <p>Vercel (hébergement et diffusion) et Upstash (base de données) traitent les données pour notre compte, en tant que sous-traitants, dans le cadre d'accords de traitement des données. Vercel est établi aux États-Unis. Les transferts reposent sur le Data Privacy Framework UE–États-Unis et les clauses contractuelles types de la Commission européenne. Nous ne vendons ni ne partageons les données avec qui que ce soit d'autre, et il n'y a pas de publicité.</p>
+
+    <h2>Cookies et mesure d'audience</h2>
+    <p>Pas de cookies, pas de traceurs publicitaires, pas de scripts tiers. Nous comptons les visites avec Vercel Web Analytics, qui fonctionne sans cookies et ne conserve pas les adresses IP : un visiteur n'est reconnu que par une empreinte de la requête, effacée au bout de 24 heures, et nous ne voyons que des chiffres agrégés (pages, sites référents, pays, types d'appareils et de navigateurs). Les adresses des dossiers sont anonymisées en <code>/case/[id]</code> avant tout envoi, et les paramètres d'URL sont retirés.</p>
+
+    <h2>Tes droits</h2>
+    <ul>
+      <li><strong>Suppression</strong> de ton dossier à tout moment : lance <code>/claude-dependency-test:diagnose --unpublish</code> sur la machine qui l'a publié. Il est retiré immédiatement de notre base ; les copies en cache de la page, de l'image d'aperçu et du badge expirent sous 5 minutes. Tu n'as plus cette machine ? Envoie le lien de ton dossier via le <a href="https://www.camilleroux.com/contact/?ref=claude-dependency-test">formulaire de contact</a> et nous le supprimerons.</li>
+      <li><strong>Rectification</strong> : relance le test, il remplace les chiffres publiés.</li>
+      <li><strong>Accès et portabilité</strong> : ta page de dossier affiche tout ce que nous conservons, et la sortie <code>--json</code> du plugin le fournit dans un format lisible par une machine.</li>
+      <li><strong>Opposition ou limitation</strong> : utilise <code>--no-publish</code>, ou le <a href="https://www.camilleroux.com/contact/?ref=claude-dependency-test">formulaire de contact</a>.</li>
+    </ul>
+    <p>Comme nous ne pouvons pas savoir à qui appartient un dossier, nous pouvons te demander de le prouver (par exemple en publiant une mise à jour depuis ta machine) avant de donner suite à une demande. Tu peux aussi introduire une réclamation auprès de ton autorité de protection des données. En France, c'est la <a href="https://www.cnil.fr/fr/adresser-une-plainte" rel="noopener">CNIL</a>.</p>
+  </article>
+  <footer>Pas un vrai diagnostic médical. Non officiel, sans lien avec Anthropic. <a href="/fr">Accueil</a></footer>
+</div>
+</body>
+</html>

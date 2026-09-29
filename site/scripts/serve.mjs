@@ -62,6 +62,7 @@ http.createServer(async (req, res) => {
     const rel = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
     let file = path.join(SITE, 'public', path.normalize(rel));
     if (!path.extname(file) && fs.existsSync(`${file}.html`)) file = `${file}.html`; // like cleanUrls on Vercel
+    else if (fs.existsSync(path.join(file, 'index.html'))) file = path.join(file, 'index.html'); // directory index
     if (!file.startsWith(path.join(SITE, 'public')) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       return void res.writeHead(404).end('Not found');
     }

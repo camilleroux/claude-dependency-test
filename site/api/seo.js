@@ -6,7 +6,7 @@ export default function handler(request) {
   const url = new URL(request.url);
   const origin = url.origin;
   if (url.searchParams.get('f') === 'sitemap') {
-    const pages = ['/', '/privacy', '/case/demo'];
+    const pages = ['/', '/fr', '/privacy', '/fr/privacy', '/case/demo', '/case/demo?lang=fr'];
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join('\n')}

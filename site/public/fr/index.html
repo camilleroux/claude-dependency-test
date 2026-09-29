@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Dependency Test · À quel point es-tu accro à Claude Code ?</title>
+<meta name="description" content="Un plugin Claude Code gratuit qui transforme tes stats d'usage en score de dépendance sur 100, en faux diagnostic médical et en dossier à partager : heures, séries, sous-agents, mots écrits par Claude. Tes prompts ne quittent jamais ta machine.">
+<link rel="canonical" href="https://dependency.camilleroux.com/fr">
+<link rel="alternate" hreflang="en" href="https://dependency.camilleroux.com/">
+<link rel="alternate" hreflang="fr" href="https://dependency.camilleroux.com/fr">
+<link rel="alternate" hreflang="x-default" href="https://dependency.camilleroux.com/">
+<meta name="author" content="Camille Roux">
+<link rel="author" href="https://www.camilleroux.com/?ref=claude-dependency-test">
+<meta name="twitter:creator" content="@CamilleRoux">
+<meta name="twitter:site" content="@CamilleRoux">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:title" content="Claude Dependency Test">
+<meta property="og:description" content="À quel point es-tu accro à Claude ? Ton score, ton stade et ton diagnostic (faux) à l'air très officiel. Calculé en local, partagé si tu le veux.">
+<meta property="og:image" content="/og/demo">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="preload" href="/fonts/VT323-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="theme-color" content="#010403">
+<link rel="stylesheet" href="/site.css">
+<script src="/va.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebApplication", "name": "Claude Dependency Test", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux, Windows (Claude Code)", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "description": "Un plugin Claude Code qui note ta dépendance à Claude sur 100 à partir de tes stats d'usage locales et publie un dossier à partager.", "inLanguage": "fr", "author": {"@id": "https://www.camilleroux.com/#person"}, "isAccessibleForFree": true}, {"@type": "Person", "@id": "https://www.camilleroux.com/#person", "name": "Camille Roux", "url": "https://www.camilleroux.com/", "sameAs": ["https://x.com/CamilleRoux", "https://bsky.app/profile/camilleroux.com", "https://www.linkedin.com/in/camilleroux", "https://mastodon.social/@camilleroux", "https://github.com/camilleroux"]}]}</script>
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 40px; align-items: center; padding: 28px 0 64px; }
+  @media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+  .demo-caption { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; font: 400 18px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .pill-live { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/fr">CLAUDE DEPENDENCY TEST</a>
+    <div class="nav-links">
+      <span class="nav-meta">Claude Dependency Monitor</span>
+      <a class="btn" id="gh" href="#" rel="noopener">GitHub</a>
+      <a class="btn lang-switch" href="/?lang=en" hreflang="en" lang="en" data-set-lang="en">EN</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <p class="kicker">Claude Dependency Test · un dépistage profondément non scientifique</p>
+      <h1>À quel point es-tu accro à Claude ?</h1>
+      <p class="lead">Un plugin Claude Code qui lit tes habitudes d'usage en local, note ta dépendance sur 100 et publie ton dossier médical. Tes prompts ne quittent jamais ta machine.</p>
+      <p class="byline">Un side project de <a href="https://www.camilleroux.com/?ref=claude-dependency-test" rel="author">Camille Roux</a> · suis <a href="https://x.com/CamilleRoux" rel="me noopener" target="_blank">@CamilleRoux</a></p>
+      <div class="install" id="install"></div>
+      <p class="muted small" style="margin-top:12px">À lancer dans Claude Code. Nécessite Node.js 18+. Deux secondes chrono. <a href="/case/demo?lang=fr">Voir un dossier exemple →</a></p>
+    </div>
+    <div>
+      <canvas id="demo" class="card-canvas" width="1200" height="630" role="img" aria-label="Exemple de carte de résultat"></canvas>
+      <div class="demo-caption"><span>Patients exemples</span><span class="pill-live" id="demo-name"></span></div>
+    </div>
+  </header>
+
+  <section class="block">
+    <p class="kicker">Diagnostic</p>
+    <h2>Les cinq stades</h2>
+    <p class="muted" style="max-width:60ch">Ton score sur 100 correspond à un stade. Aucun stade n'est honteux. Aucun n'a de traitement non plus.</p>
+    <div class="stages" id="stages"></div>
+  </section>
+
+  <section class="block">
+    <p class="kicker">Pathologies</p>
+    <h2>Quel est ton diagnostic ?</h2>
+    <p class="muted" style="max-width:60ch">Huit pathologies entièrement inventées, chacune avec son code de diagnostic. La tienne vient de ton symptôme le plus sévère. Collectionne-les toutes (s'il te plaît, non).</p>
+    <div class="grid cols-4" id="archetypes"></div>
+  </section>
+
+  <section class="block" id="methodology">
+    <p class="kicker">Méthodologie</p>
+    <h2>Comment le score est calculé</h2>
+    <p class="muted" style="max-width:66ch">Neuf symptômes, des règles explicites. Le score mesure l'excès (heures, séries, volume, délégation), jamais <em>quand</em> tu travailles. Chaque symptôme rapporte des points de façon linéaire entre deux seuils. Si un symptôme ne peut pas être mesuré de façon fiable, il est ignoré et le score est renormalisé sur les autres : jamais de faux zéro.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Symptôme</th><th>Points</th><th>0 point à</th><th>Tous les points à</th></tr></thead>
+      <tbody id="scoring"></tbody>
+    </table></div>
+    <p class="muted small">Une session se termine après 30 minutes d'inactivité. Les heures et les jours suivent ton fuseau horaire. La fenêtre d'observation correspond à l'historique que Claude Code conserve (30 jours par défaut).</p>
+  </section>
+
+  <section class="block">
+    <p class="kicker">Confidentialité d'abord</p>
+    <h2>Tes prompts restent à toi</h2>
+    <div class="two">
+      <div class="tile">
+        <h3>Ce qui est publié</h3>
+        <ul class="check">
+          <li>Score, stade et diagnostic</li>
+          <li>La valeur et les points de chaque symptôme</li>
+          <li>Le nombre de prompts par heure, jour de la semaine et jour</li>
+          <li>La part de chaque famille de modèles (Opus, Sonnet…)</li>
+          <li>Uniquement des nombres et des libellés fixes : le serveur refuse tout texte libre</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Ce qui ne quitte jamais ta machine</h3>
+        <ul class="check cross">
+          <li>Le texte de tes prompts et des réponses de Claude</li>
+          <li>Ton code, tes chemins de fichiers, tes noms de projets et de branches git</li>
+          <li>Les entrées et sorties des outils, les noms des serveurs MCP</li>
+          <li>Tout ce qui t'identifie : pas de compte, pas de cookies, aucune adresse IP conservée avec ton dossier</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted" style="max-width:66ch;margin-top:16px">Le score est calculé sur ta machine par un script déterministe ; Claude ne lit jamais tes transcripts pour ça. Relancer le test met à jour le même lien. Supprime ta page à tout moment avec <code>--unpublish</code>, ou reste entièrement hors ligne avec <code>--no-publish</code>. Les pages expirent après un an sans mise à jour.</p>
+  </section>
+
+  <section class="block doctor">
+    <p class="kicker">Le docteur</p>
+    <h2>Qui est derrière le diagnostic</h2>
+    <p style="max-width:62ch">Claude Dependency Test est un side project de <a href="https://www.camilleroux.com/?ref=claude-dependency-test" rel="author">Camille Roux</a>, construit (évidemment) avec une quantité déraisonnable de Claude Code. Les nouveaux symptômes, pathologies et expériences sont annoncés d'abord sur les réseaux.</p>
+    <div class="btn-row" id="follow-buttons"></div>
+    <p class="muted small" style="margin-top:14px">D'autres projets et articles sur <a href="https://www.camilleroux.com/?ref=claude-dependency-test">camilleroux.com</a>.</p>
+  </section>
+
+  <section class="block">
+    <p class="kicker">FAQ</p>
+    <details><summary>C'est un produit officiel d'Anthropic ?</summary><p class="muted">Non. C'est un projet de fan non officiel, sans lien avec Anthropic ni validé par Anthropic.</p></details>
+    <details><summary>C'est un vrai diagnostic médical ?</summary><p class="muted">Absolument pas. C'est une blague avec des maths honnêtes. Si ton temps d'écran t'inquiète, parles-en à un professionnel, humain.</p></details>
+    <details><summary>Pourquoi ma période d'observation ne fait que 30 jours ?</summary><p class="muted">Claude Code supprime les transcripts plus vieux que <code>cleanupPeriodDays</code> (30 par défaut). Le test ne voit que ce qui est encore sur le disque.</p></details>
+    <details><summary>Je peux tricher ?</summary><p class="muted">Le site vérifie seulement que les chiffres sont plausibles, donc techniquement oui. Tu pourrais aussi simplement utiliser Claude moins souvent. On sait déjà ce que tu vas choisir.</p></details>
+  </section>
+
+  <footer>
+    <p class="made-by">Créé par <a href="https://www.camilleroux.com/?ref=claude-dependency-test" rel="author">Camille Roux</a>. D'autres expériences et articles sur <a href="https://www.camilleroux.com/?ref=claude-dependency-test">camilleroux.com</a>.</p>
+    <p class="follow-foot">Suis le docteur : <span id="follow"></span></p>
+    Pas un vrai diagnostic médical. Non officiel, sans lien avec Anthropic. Fait avec une quantité déraisonnable de Claude. · <a href="/fr/privacy">Confidentialité</a>
+  </footer>
+</div>
+<script type="module" src="/landing.js"></script>
+</body>
+</html>

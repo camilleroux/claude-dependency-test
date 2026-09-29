@@ -25,6 +25,9 @@ export function bindThemeToggle(button) {
   applyTheme();
 }
 
+const FR = () => document.documentElement.lang === 'fr';
+const T = (en, fr) => (FR() ? fr : en);
+
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
 }
@@ -42,10 +45,10 @@ export function renderInstall(container) {
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.type = 'button';
-    btn.textContent = 'Copy';
+    btn.textContent = T('Copy', 'Copier');
     btn.addEventListener('click', async () => {
-      btn.textContent = (await copy(cmd)) ? 'Copied' : 'Select & copy';
-      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      btn.textContent = (await copy(cmd)) ? T('Copied', 'Copié') : T('Select & copy', 'Sélectionne et copie');
+      setTimeout(() => { btn.textContent = T('Copy', 'Copier'); }, 1500);
     });
     row.append(n, code, btn);
     container.appendChild(row);
@@ -77,15 +80,15 @@ export function wireShare({ card, url, text, exportPng, els, status }) {
     a.download = `claude-dependency-${card.score}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    say('Saved a 1200×630 PNG, rendered in your browser.');
+    say(T('Saved a 1200×630 PNG, rendered in your browser.', 'PNG 1200×630 enregistré, généré dans ton navigateur.'));
   });
   els.copyImg?.addEventListener('click', async () => {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': exportPng() })]);
-      say('Image copied. Paste it anywhere.');
-    } catch { say('Your browser blocked image copy. Use "Save as PNG" instead.'); }
+      say(T('Image copied. Paste it anywhere.', 'Image copiée. Colle-la où tu veux.'));
+    } catch { say(T('Your browser blocked image copy. Use "Save as PNG" instead.', "Ton navigateur bloque la copie d'image. Utilise « Enregistrer en PNG ».")); }
   });
-  els.copyLink?.addEventListener('click', async () => say((await copy(url)) ? 'Link copied.' : url));
+  els.copyLink?.addEventListener('click', async () => say((await copy(url)) ? T('Link copied.', 'Lien copié.') : url));
   if (els.native) {
     if (navigator.share) {
       els.native.hidden = false;
@@ -106,7 +109,7 @@ export function bindCopyButtons(root = document) {
   for (const btn of root.querySelectorAll('[data-copy]')) {
     const label = btn.textContent;
     btn.addEventListener('click', async () => {
-      btn.textContent = (await copy(btn.dataset.copy)) ? 'Copied' : 'Select & copy';
+      btn.textContent = (await copy(btn.dataset.copy)) ? T('Copied', 'Copié') : T('Select & copy', 'Sélectionne et copie');
       setTimeout(() => { btn.textContent = label; }, 1500);
     });
   }
